@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+ltp.dot
+*.sv
+*.il
+*_bmc/*
+*_prove/*
+*_cover/*
+waves/*

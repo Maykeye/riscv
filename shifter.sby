@@ -1,0 +1,17 @@
+[tasks]
+bmc
+
+[options]
+bmc: mode bmc
+depth 3
+multiclock off
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -sv shifter.sv
+prep -top top
+
+[files]
+shifter.sv

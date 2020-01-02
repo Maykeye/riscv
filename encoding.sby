@@ -1,0 +1,19 @@
+[tasks]
+bmc
+
+
+[options]
+bmc: mode bmc
+
+depth 2
+multiclock off
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -sv encoding.sv
+prep -top top
+
+[files]
+encoding.sv
