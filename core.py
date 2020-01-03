@@ -74,7 +74,7 @@ class Core(ElaboratableAbstract):
         self.next_pc = Signal(xlen)
         self.advance_pc = Signal()
 
-        self.alu = ALU(self.xlen, "core")
+        self.alu =  ALU(self.xlen, "core")
         self.left_shifter = Shifter(xlen, Shifter.LEFT, "SL")
         self.right_shifter = Shifter(xlen, Shifter.RIGHT, "SR")
 
@@ -89,6 +89,9 @@ class Core(ElaboratableAbstract):
     def elaborate(self, p:Platform) -> Module:
         m = Module()
         self.current_module = m
+        m.submodules.alu = self.alu
+        m.submodules.shl = self.left_shifter
+        m.submodules.shr = self.right_shifter
         self.iclk = m.d.i
         self.itype.elaborate(m.d.comb, self.input_data[0])
         
@@ -197,10 +200,8 @@ class Core(ElaboratableAbstract):
             with m.Switch(self.mem2core_addr):
                 for address, value in mem.items():
                     with m.Case(address):
-                        comb += self.input_data[0].eq(Cat(value, 
-                            mem.get(address+1, 0xff), 
-                            mem.get(address+2, 0xff),
-                            mem.get(address+3, 0xff)))                    
+                        word_value = value | (mem.get(address+1, 0xff) << 8) | (mem.get(address+2, 0xff) << 16) | (mem.get(address+3, 0xff) << 24)
+                        comb += self.input_data[0].eq(word_value)
                 with m.Default():
                     comb += self.input_data[0].eq(0xFFFFFFFF) 
             comb += self.input_ready.eq(1)

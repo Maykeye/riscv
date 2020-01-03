@@ -1,10 +1,10 @@
 from nmigen import Module, Signal, ClockSignal, ClockDomain
-from nmigen.cli import main_parser, main_runner
+from nmigen.cli import main_parser, main_runner, main as nmigen_main
 
 from core import Core
-from instructions.nop import NOP
+from instructions.op_imm import OpImmInstr
 from clock_info import ClockInfo
-
+import sys 
 import alu 
 
 def main():
@@ -15,8 +15,12 @@ def main():
     core.aux_ports.append(clock.clk)
     core.aux_ports.append(clock.rst)
     
-    core.add_instruction(NOP())    
-    core.simulate(m, clock, NOP.simulate())
+    core.add_instruction(OpImmInstr())    
+    core.simulate(m, clock, OpImmInstr.simulate())
+
+    if "generate" in sys.argv:
+        nmigen_main(m, ports=core.ports())
+
 
 if __name__ == "__main__":
     main()

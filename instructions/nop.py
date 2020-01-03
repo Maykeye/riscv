@@ -13,7 +13,7 @@ class NOP(Instruction):
         core = self.core
         """ Check that instruction can be executed """
         return ((core.itype.opcode == Opcode.OpImm)
-            & (core.itype.funct3 == OpImm.ADDI)
+            & (core.itype.funct3 == OpImm.ADD)
             & (core.itype.imm==0)
             & (core.itype.rs1==0)            
             & (core.itype.rd ==0))
@@ -28,6 +28,6 @@ class NOP(Instruction):
     def simulate():
         membuild=MemBuild(0x200)
         return (membuild
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADDI))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADDI))
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD))
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD))
             .dict)

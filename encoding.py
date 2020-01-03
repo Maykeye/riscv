@@ -46,6 +46,8 @@ class IType:
 
     @staticmethod
     def build_i32(opcode:int=0, rd:int=0, funct3:int=0,rs1:int=0, imm:int=0, ensure_ints=True)->int:        
+        if type(imm) == int:
+            assert -2**12 <= imm < 2**12
         imm = imm & (2**12)-1
 
         word = opcode | (rd << 7) | (funct3 << 12) | (rs1 << 15) | (imm << 20)

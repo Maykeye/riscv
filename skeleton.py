@@ -125,15 +125,37 @@ def dump_inputs(from_module:Module, to_module : Module, prefix="", suffix="") ->
             raise Exception("Unsupported signal %s type %s" % (signal, signal.__class__))
     return input_copies
 
-def as_signed(m, signal:Signal):
+from nmigen import Shape, Value
+from nmigen.hdl.ast import UserValue
+
+class AsSinged(UserValue):
+    def __init__(self, wrapped_value, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.wrapped_value = wrapped_value
+
+    def lower(self):
+        return self.wrapped_value
+
+    def shape(self):        
+        return Shape(width=self.wrapped_value.width, signed=True)
+
+
+
+def as_signed(m : Module, signal:Signal):
     """ Create a new copy of signal, but marked as signed """
     if signal.signed:
         # signed already 
         print(f"Warning: trying to cast already signed sigan {signal.name}")
         return signal 
+    
     new_signal = Signal(signed(signal.width), name=signal.name+"_signed")
     m.d.comb += new_signal.eq(signal)
     return new_signal
+    #casted_value =  -(-signal)
+    #return casted_value
+    #sliced=signal.bit_select(0,signal.width)
+    #sliced.shape=lambda : Shape(width=signal.width, signed=True)
+    #return sliced
 
 
 def SeqPast(signal : Signal, n : int, expect : bool):

@@ -25,7 +25,9 @@ class ALU(ElaboratableAbstract):
     
     def elaborate(self, p:Platform) -> Module:
         m = Module()
-        comb = m.d.comb        
+        comb = m.d.comb    
+        signed_lhs = as_signed(m,self.lhs)
+        signed_rhs = as_signed(m,self.rhs)
         with m.If(self.en):
             if self.invalid_op is not None:
                 comb += self.invalid_op.eq(0)
@@ -33,7 +35,7 @@ class ALU(ElaboratableAbstract):
                 with m.Case(OpAlu.ADD):
                     comb += self.output.eq(self.lhs + self.rhs)
                 with m.Case(OpAlu.SLT):
-                    comb += self.output.eq(Mux(as_signed(m,self.lhs) < as_signed(m,self.rhs), 1, 0))
+                    comb += self.output.eq(Mux(signed_lhs < signed_rhs, 1, 0))
                 with m.Case(OpAlu.SLTU):
                     comb += self.output.eq(Mux(self.lhs < self.rhs, 1, 0))
                 with m.Case(OpAlu.AND):
@@ -81,7 +83,8 @@ def __main():
     
       
     
-    
+    lhs_signed = as_signed(m, lhs)
+    rhs_signed = as_signed(m, rhs)
     with m.If(alu1.en):
         with m.If(alu1.op == OpAlu.XOR):
             m.d.comb += Assert(alu1.invalid_op == 0)
@@ -100,7 +103,7 @@ def __main():
 
         with m.Elif(alu1.op == OpAlu.SLT):        
             m.d.comb += Assert(alu1.invalid_op == 0)
-            with m.If(as_signed(m, lhs) < as_signed(m, rhs)):
+            with m.If(lhs_signed < rhs_signed):
                 m.d.comb += Assert(alu1.output == 1)
             with m.Else():
                 m.d.comb += Assert(alu1.output == 0)

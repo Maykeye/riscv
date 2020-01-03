@@ -4,13 +4,13 @@ class Opcode(IntEnum):
     OpImm = 0b0010011
 
 class OpImm(IntEnum):
-    ADDI  = 0b000,
+    ADD  = 0b000,
     SHIFT_LEFT  = 0b001,
-    SLTI  = 0b010,
-    SLTIU = 0b011,
-    XORI  = 0b100,
-    ORI   = 0b110,
-    ANDI  = 0b111,
+    SLT  = 0b010,
+    SLTU = 0b011,
+    XOR  = 0b100,
+    OR   = 0b110,
+    AND  = 0b111,
     SHIFT_RIGHT = 0b101
 
 
@@ -30,3 +30,14 @@ class DebugOpcode(IntEnum):
     AWAIT_READ=auto()
     IN_RESET=auto()
     NOT_SPECIFIED=auto()
+    ADD_imm  = auto()
+    SLL_imm  = auto()
+    SLT_imm  = auto()
+    SLTIU_imm = auto()
+    XOR_imm  = auto()
+    OR_imm   = auto()
+    AND_imm  = auto()
+    SRA_imm = auto()
+    SRL_imm = auto()
+
+    UNREACHABLE = auto()
