@@ -92,6 +92,7 @@ class OpImmInstr(Instruction):
             .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1))
             .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1 | (1 << 10)))
             .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD))
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=0, imm=0))
             .dict
         )
 

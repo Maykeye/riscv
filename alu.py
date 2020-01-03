@@ -32,7 +32,7 @@ class ALU(ElaboratableAbstract):
             if self.invalid_op is not None:
                 comb += self.invalid_op.eq(0)
             with m.Switch(self.op):
-                with m.Case(OpAlu.ADD):
+                with m.Case(OpAlu.ADD):                    
                     comb += self.output.eq(self.lhs + self.rhs)
                 with m.Case(OpAlu.SLT):
                     comb += self.output.eq(Mux(signed_lhs < signed_rhs, 1, 0))

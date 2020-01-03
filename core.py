@@ -74,7 +74,7 @@ class Core(ElaboratableAbstract):
         self.next_pc = Signal(xlen)
         self.advance_pc = Signal()
 
-        self.alu =  ALU(self.xlen, "core")
+        self.alu =  ALU(self.xlen, "alu")
         self.left_shifter = Shifter(xlen, Shifter.LEFT, "SL")
         self.right_shifter = Shifter(xlen, Shifter.RIGHT, "SR")
 
@@ -95,6 +95,7 @@ class Core(ElaboratableAbstract):
         self.iclk = m.d.i
         self.itype.elaborate(m.d.comb, self.input_data[0])
         
+        m.d.comb += self.alu.en.eq(0)
         m.d.comb += self.advance_pc.eq(0)
         m.d.comb += self.next_pc.eq(0)
         
@@ -152,7 +153,8 @@ class Core(ElaboratableAbstract):
 
         comb += self.alu.lhs.eq(lhs)
         comb += self.alu.rhs.eq(rhs)        
-        comb += self.alu.op.eq(func)
+        comb += self.alu.op.eq(func)        
+        comb += self.alu.en.eq(1)
 
         iclk += rdst.eq(self.alu.output)
 
