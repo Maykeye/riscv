@@ -211,7 +211,7 @@ class Core(ElaboratableAbstract):
             comb += self.input_ready.eq(0)
                 
 
-    def simulate(self, top : Module, clk : ClockInfo, mem : Dict[int, int], n=10, filename_prefix="waves/test"):
+    def simulate(self, top : Module, clk : ClockInfo, mem : Dict[int, int], n=30, filename_prefix="waves/test"):
         rst = clk.rst
         self.make_fakemem(top, mem)
         dump_inputs(self, top)

@@ -78,21 +78,21 @@ class OpImmInstr(Instruction):
     def simulate():
 
         return (MemBuild(0x200)
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=1, imm=11))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=0, imm=15))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_LEFT,  rd=2, rs1=1, imm=2))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=3, rs1=2, imm=2))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SLT, rd=4, rs1=2, imm=1000))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SLT, rd=4, rs1=2, imm=0))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.XOR, rd=5, rs1=1, imm=-1))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=6, imm=6))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.AND, rd=7, rs1=6, imm=3))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=8, imm=3))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.OR, rd=9, rs1=8, imm=8))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1 | (1 << 10)))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=0, imm=0))
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=1, imm=11)) #X0=11
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=0, imm=15)) #x0=0
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_LEFT,  rd=2, rs1=1, imm=2)) #x2=2c=B<<2
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=3, rs1=2, imm=2)) #x3=2c>>2=b
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SLT, rd=4, rs1=2, imm=1000)) #r4=x1 < 1000 = 1
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SLT, rd=4, rs1=2, imm=0))  #x4=x1 < 0 = 0
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.XOR, rd=5, rs1=1, imm=-1)) #x5=~x1=FFFF FFF4
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=6, imm=6)) #x6=6=b110
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.AND, rd=7, rs1=6, imm=3)) #x7=2
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=8, imm=3)) #x8=3
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.OR, rd=9, rs1=8, imm=8)) #x8=b=3+8=11
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1)) #7FFFFFFA
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1 | (1 << 10))) #FFFFFFFA
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=10, rs1=0,  imm=0x10)) #0+10
+            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=10, rs1=10, imm=0x20)) #0+10+20=30
             .dict
         )
 
