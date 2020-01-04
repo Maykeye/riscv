@@ -11,8 +11,10 @@ multiclock off
 smtbmc z3
 
 [script]
-read_verilog -sv rv.sv
+read_ilang rv.il
+#read_verilog -sv rv.sv
 prep -top top
 
 [files]
-rv.sv
+rv.il
+#rv.sv

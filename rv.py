@@ -6,19 +6,22 @@ from instructions.op_imm import OpImmInstr
 from clock_info import ClockInfo
 import sys 
 import alu 
+from nmigen import ResetSignal
 
-from proofs.verification import ProofAdd
+from proofs.addi import ProofAddI
 
 def main():
     m = Module()
     clock = ClockInfo("i")
     m.domains.i = clock.domain
-    m.submodules.core = core = Core()
+    m.submodules.core = core = Core(clock)
     core.aux_ports.append(clock.clk)
     core.aux_ports.append(clock.rst)
     
+
+
     core.add_instruction(OpImmInstr())  
-    p = ProofAdd()  
+    p = ProofAddI()  
     p.run(m, core)
 
     #core.simulate(m, clock, OpImmInstr.simulate())

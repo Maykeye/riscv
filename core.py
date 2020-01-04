@@ -24,12 +24,13 @@ from shifter import Shifter
 
 
 class Core(ElaboratableAbstract):
-    def __init__(self, look_ahead=1, addr_length=32, xlen=32, include_enable=False, include_debug_opcode=1):
+    def __init__(self, clock, look_ahead=1, addr_length=32, xlen=32, include_enable=False, include_debug_opcode=1):
         assert addr_length % 8 == 0, "address length must be octet aligned"
         assert xlen % 8 == 0, "register width must be octet aligned"
 
         assert look_ahead >= 1, "Core should see at least one full word ahead"
         super().__init__()
+        self.clock = clock
         
         # Input Data holds N words that recently were read from memory
         # and meant to be executed by the CPU
