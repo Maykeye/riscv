@@ -8,7 +8,7 @@ import sys
 import alu 
 from nmigen import ResetSignal
 
-from proofs.addi import ProofAddI
+from proofs.verification import ProofOverTicks
 
 def main():
     m = Module()
@@ -19,10 +19,10 @@ def main():
     core.aux_ports.append(clock.rst)
     
 
-
-    core.add_instruction(OpImmInstr())  
-    p = ProofAddI()  
-    p.run(m, core)
+    instr = core.add_instruction(OpImmInstr())
+    for proof_class in instr.proofs():
+        p = proof_class()
+        p.run(m, core)
 
     #core.simulate(m, clock, OpImmInstr.simulate())
 

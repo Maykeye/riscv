@@ -84,6 +84,7 @@ class Core(ElaboratableAbstract):
     def add_instruction(self, implementation):
         self.instructions.append(implementation)
         implementation.core = self
+        return implementation
 
 
 

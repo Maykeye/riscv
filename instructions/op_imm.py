@@ -7,7 +7,7 @@ from opcodes import Opcode, OpImm, DebugOpcode
 from nmigen import Mux
 from membuild import MemBuild
 
-
+from proofs.addi import ProofAddI
 
 
 class OpImmInstr(Instruction):
@@ -97,6 +97,9 @@ class OpImmInstr(Instruction):
             .dict
         )
 
-          
+
+    def proofs(self):
+        return [ProofAddI]
+
 
         
