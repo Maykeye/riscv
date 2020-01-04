@@ -1,0 +1,18 @@
+[tasks]
+bmc
+
+[options]
+bmc: mode bmc
+
+depth 5
+multiclock off
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -sv rv.sv
+prep -top top
+
+[files]
+rv.sv

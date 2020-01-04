@@ -15,7 +15,7 @@ from skeleton import ElaboratableAbstract, fix_gtkw_win, dump_inputs, SeqPast
 from skeleton import muS
 
 from instruction import Instruction
-from opocodes import DebugOpcode, OpAlu
+from opcodes import DebugOpcode, OpAlu
 from register_file import RegisterFile
 from encoding import IType
 from clock_info import ClockInfo

@@ -1,5 +1,5 @@
 from typing import List
-from nmigen import Signal, Cat, Const
+from nmigen import Signal, Cat, Const, Value, Repl
 from nmigen.hdl.ast import Statement
 
 # for verification
@@ -42,13 +42,35 @@ class IType:
         comb += self.rd.eq(input[7:12])
         comb += self.funct3.eq(input[12:15])
         comb += self.rs1.eq(input[15:20])
-        comb += self.imm.eq(Cat(input[20:32], [input[31] for _ in range(20)]))
+        comb += self.imm.eq(Cat(input[20:32], Repl(input[31], 20)))
+        
+
+    def match(self, opcode=None, rd=None, funct3=None, rs1=None, imm=None) -> Value:
+        """ Build boolean expression that matches x against provided parts """
+        if type(imm) == int:
+            assert imm.bit_length() <= 32, "imm must be 32 bit long(12 bits+signext)"
+            imm = imm & (2**32)-1
+        subexpressions = []
+        if opcode is not None: subexpressions.append(self.opcode.matches(opcode))
+        if rd is not None: subexpressions.append(self.rd.matches(rd))
+        if funct3 is not None: subexpressions.append(self.funct3.matches(funct3))
+        if rs1 is not None: subexpressions.append(self.rs1.matches(rs1))
+        if imm is not None: subexpressions.append(self.imm.matches(imm))
+
+        if not subexpressions:
+            print("warning: no matches provided for itype.match")
+            return Const(1)
+        res = subexpressions.pop(0)
+        while subexpressions:
+            res = res & subexpressions.pop(0)
+        return res
+
 
     @staticmethod
     def build_i32(opcode:int=0, rd:int=0, funct3:int=0,rs1:int=0, imm:int=0, ensure_ints=True)->int:        
         if type(imm) == int:
             assert -2**12 <= imm < 2**12
-        imm = imm & (2**12)-1
+        imm = imm & ((2**12)-1)
 
         word = opcode | (rd << 7) | (funct3 << 12) | (rs1 << 15) | (imm << 20)
         return word
@@ -166,6 +188,14 @@ class __Verify:
         m.d.comb += Assert(i.imm == Const(0b11111111111111111111100110111111, 32))
 
 
+        # matcher
+        m.d.comb += Assert(i.match(opcode=0b1001011))
+        m.d.comb += Assert(i.match(rd=0b10000))
+        m.d.comb += Assert(i.match(funct3=1))
+        m.d.comb += Assert(i.match(rs1=2))
+        m.d.comb += Assert(i.match(imm=0b11111111111111111111100110111111))
+        
+        # builder
         i_builder_check = Signal(32)
         i_builder_opcode = Signal(7)
         i_builder_rd = Signal(5)
@@ -183,6 +213,7 @@ class __Verify:
         m.d.comb += Assert(i_builder_funct3 == i.funct3)
         m.d.comb += Assert(i_builder_rs1 == i.rs1)        
         m.d.comb += Assert(i_builder_imm == i.imm[0:12])
+
         return [i_builder_check, i_builder_opcode, i_builder_rd, i_builder_funct3, i_builder_rs1, i_builder_imm]
 
 

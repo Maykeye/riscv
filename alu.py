@@ -2,7 +2,7 @@ from nmigen import Signal, Module, Mux, Const
 from typing import Optional
 from nmigen.build import Platform
 from skeleton import ElaboratableAbstract
-from opocodes import OpAlu
+from opcodes import OpAlu
 from skeleton import as_signed
 
 class ALU(ElaboratableAbstract):

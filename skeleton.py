@@ -125,19 +125,6 @@ def dump_inputs(from_module:Module, to_module : Module, prefix="", suffix="") ->
             raise Exception("Unsupported signal %s type %s" % (signal, signal.__class__))
     return input_copies
 
-from nmigen import Shape, Value
-from nmigen.hdl.ast import UserValue
-
-class AsSinged(UserValue):
-    def __init__(self, wrapped_value, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.wrapped_value = wrapped_value
-
-    def lower(self):
-        return self.wrapped_value
-
-    def shape(self):        
-        return Shape(width=self.wrapped_value.width, signed=True)
 
 
 
@@ -151,24 +138,21 @@ def as_signed(m : Module, signal:Signal):
     new_signal = Signal(signed(signal.width), name=signal.name+"_signed")
     m.d.comb += new_signal.eq(signal)
     return new_signal
-    #casted_value =  -(-signal)
-    #return casted_value
-    #sliced=signal.bit_select(0,signal.width)
-    #sliced.shape=lambda : Shape(width=signal.width, signed=True)
-    #return sliced
 
 
-def SeqPast(signal : Signal, n : int, expect : bool):
-    """ Chain Past(x, n) & Past(x, n-1)... or ~Past(x, n) & ~Past(x, n-1)..."""
+def SeqPast(signal : Signal, hi : int, lo:int, expect : bool):
+    """ Chain Past(x, hi) & Past(x, hi-1)...& Past(x, lo) or ~Past(x, hi) & ~Past(x, hi-1)...& ~Past(x, lo)"""
     def make_term():
         if expect:
             return Past(signal, n)
         else:
             return ~Past(signal, n)
 
+    assert hi >= lo
+    n = hi
     term = make_term()
     n -= 1
-    while n >= 1:
+    while n >= lo:
         term = term & make_term()
         n -= 1
     return term

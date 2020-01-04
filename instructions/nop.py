@@ -1,7 +1,7 @@
 from instruction import Instruction
 from core import Core
 from encoding import IType
-from opocodes import Opcode, OpImm, DebugOpcode
+from opcodes import Opcode, OpImm, DebugOpcode
 from membuild import MemBuild
 
 class NOP(Instruction):
@@ -28,6 +28,6 @@ class NOP(Instruction):
     def simulate():
         membuild=MemBuild(0x200)
         return (membuild
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD))
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD))
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD))
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD))
             .dict)

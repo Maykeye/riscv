@@ -3,7 +3,7 @@ from nmigen import Module, Signal
 from instruction import Instruction
 from core import Core
 from encoding import IType
-from opocodes import Opcode, OpImm, DebugOpcode
+from opcodes import Opcode, OpImm, DebugOpcode
 from nmigen import Mux
 from membuild import MemBuild
 
@@ -42,7 +42,7 @@ class OpImmInstr(Instruction):
         self.core.move_pc_to_next_instr()
 
     def decode_debug_opcode(self) -> Signal:
-        m : Module = self.core.current_module
+        m : Core = self.core.current_module
         comb = m.d.comb
         core : Core = self.core
 
@@ -78,21 +78,22 @@ class OpImmInstr(Instruction):
     def simulate():
 
         return (MemBuild(0x200)
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=1, imm=11)) #X0=11
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=0, imm=15)) #x0=0
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_LEFT,  rd=2, rs1=1, imm=2)) #x2=2c=B<<2
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=3, rs1=2, imm=2)) #x3=2c>>2=b
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SLT, rd=4, rs1=2, imm=1000)) #r4=x1 < 1000 = 1
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SLT, rd=4, rs1=2, imm=0))  #x4=x1 < 0 = 0
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.XOR, rd=5, rs1=1, imm=-1)) #x5=~x1=FFFF FFF4
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=6, imm=6)) #x6=6=b110
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.AND, rd=7, rs1=6, imm=3)) #x7=2
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=8, imm=3)) #x8=3
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.OR, rd=9, rs1=8, imm=8)) #x8=b=3+8=11
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1)) #7FFFFFFA
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1 | (1 << 10))) #FFFFFFFA
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=10, rs1=0,  imm=0x10)) #0+10
-            .add(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=10, rs1=10, imm=0x20)) #0+10+20=30
+            .addi(rd=1, rs1=0, imm=11) #x1=11
+            .addi(rd=0, rs1=0, imm=15) #x0=0
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_LEFT,  rd=2, rs1=1, imm=2)) #x2=2c=B<<2
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=3, rs1=2, imm=2)) #x3=2c>>2=b
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SLT, rd=4, rs1=2, imm=1000)) #r4=x1 < 1000 = 1
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SLT, rd=4, rs1=2, imm=0))  #x4=x1 < 0 = 0
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.XOR, rd=5, rs1=1, imm=-1)) #x5=~x1=FFFF FFF4
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=6, imm=6)) #x6=6=b110
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.AND, rd=7, rs1=6, imm=3)) #x7=2
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=8, imm=3)) #x8=3
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.OR, rd=9, rs1=8, imm=8)) #x8=b=3+8=11
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1)) #7FFFFFFA
+            .add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.SHIFT_RIGHT, rd=10, rs1=5, imm=1 | (1 << 10))) #FFFFFFFA
+            .addi(rd=10, rs1=0, imm=0x10) #0+10
+            .addi(rd=10, rs1=10, imm=0x20) #10+20
+            .addi(rd=10, rs1=10, imm=-0x20) #30-20
             .dict
         )
 
