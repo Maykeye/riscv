@@ -38,10 +38,10 @@ class OpImmInstr(Instruction):
             with m.Default():
                 core.call_alu(core.r[core.itype.rd], core.itype.funct3, core.r[core.itype.rs1], core.itype.imm)
         
-        self.core.emit_debug_opcode(self.decode_debug_opcode(), self.core.r.pc)
+        self.core.emit_debug_opcode(self.encode_debug_opcode(), self.core.r.pc)
         self.core.move_pc_to_next_instr()
 
-    def decode_debug_opcode(self) -> Signal:
+    def encode_debug_opcode(self) -> Signal:
         m : Core = self.core.current_module
         comb = m.d.comb
         core : Core = self.core
