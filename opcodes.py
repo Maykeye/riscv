@@ -2,6 +2,7 @@ from enum import IntEnum, auto
 
 class Opcode(IntEnum):
     OpImm = 0b0010011
+    Jal   = 0b1101111
 
 class OpImm(IntEnum):
     ADD  = 0b000,
@@ -39,5 +40,6 @@ class DebugOpcode(IntEnum):
     AND_imm  = auto()
     SRA_imm = auto()
     SRL_imm = auto()
+    JAL=auto()
 
     UNREACHABLE = auto()
