@@ -6,9 +6,12 @@ class MemBuild:
         self.pc = pc
         self.dict=existing_dict or {}
 
-    def add_i32(self, int32, pc=None):        
+    def set_origin(self, new_pc):
+        self.pc = new_pc
+        return self
+
+    def add_i32(self, int32):
         """ Add word to the memory after splitting it to bytes"""
-        self.pc = pc or self.pc        
         self.dict[self.pc+0] = (int32 >> (8*0)) & 0xFF
         self.dict[self.pc+1] = (int32 >> (8*1)) & 0xFF
         self.dict[self.pc+2] = (int32 >> (8*2)) & 0xFF
