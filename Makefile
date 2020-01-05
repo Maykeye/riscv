@@ -15,7 +15,7 @@ else
 MAKE_SYNTH=synth_$(SYNTH)
 LTP_MODULE=
 endif
-PROOFS=addi ori andi
+PROOFS=addi ori andi xori
 
 
 proof: check-proof
