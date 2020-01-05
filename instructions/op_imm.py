@@ -7,10 +7,8 @@ from opcodes import Opcode, OpImm, DebugOpcode
 from nmigen import Mux
 from membuild import MemBuild
 
-from proofs.addi import ProofAddI
-from proofs.ori import ProofOrI
-from proofs.xori import ProofXorI
-from proofs.andi import ProofAndI
+#from proofs.addi import ProofAddI
+from proofs.op_imm import ProofAddI, ProofOrI, ProofAndI, ProofXorI
 
 class OpImmInstr(Instruction):
     
@@ -102,6 +100,7 @@ class OpImmInstr(Instruction):
 
     def proofs(self):
         return [ProofAddI, ProofOrI, ProofAndI, ProofXorI]
+        
 
 
         

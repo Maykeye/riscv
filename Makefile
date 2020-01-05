@@ -29,9 +29,16 @@ PROOF_TARGETS = $(addprefix run-, $(PROOFS))
 
 # https://stackoverflow.com/questions/10172413/how-to-generate-targets-in-a-makefile-by-iterating-over-a-list
 define make-proof-target
-run-$1: | test_results/$1/$1_bmc/PASS
+run-$1: test_results/$1/$1_bmc/PASS
 
-test_results/$1/$1_bmc/PASS:	
+check-force-$1:
+ifeq ($(FORCE),1)
+	rm -f test_results/$1/$1_bmc/PASS
+endif
+
+
+
+test_results/$1/$1_bmc/PASS: check-force-$1
 	make proof PROOF=$1	
 endef
 $(foreach proof,$(PROOFS),$(eval $(call make-proof-target,$(proof))))
