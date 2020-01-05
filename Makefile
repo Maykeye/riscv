@@ -1,55 +1,26 @@
-.PHONY: generate proof show ltp
-
-ifeq ($(SRC),)
-SRC := core
-endif
-
-ifeq ($(MODULE),)
-MODULE := core
-endif
-
-
-ifeq ($(SYNTH),)
-LTP_MODULE=$(MODULE)
-else
-MAKE_SYNTH=synth_$(SYNTH)
-LTP_MODULE=
-endif
-PROOFS=addi ori andi xori
-
-
-proof: check-proof
-	mkdir -p "test_results/${PROOF}"
-	python3 rv.py --proof ${PROOF} generate -t il "test_results/${PROOF}/top.il"	
-	cp skeleton.sby "test_results/${PROOF}/${PROOF}.sby"		
-	cd "test_results/${PROOF}/"  && sby -f "${PROOF}.sby"
-
+PROOFS=addi ori andi xori slli srli srai
 
 PROOF_TARGETS = $(addprefix run-, $(PROOFS))
 
 # https://stackoverflow.com/questions/10172413/how-to-generate-targets-in-a-makefile-by-iterating-over-a-list
 define make-proof-target
-run-$1: test_results/$1/$1_bmc/PASS
-
-check-force-$1:
-ifeq ($(FORCE),1)
-	rm -f test_results/$1/$1_bmc/PASS
-endif
-
-
-
-test_results/$1/$1_bmc/PASS: check-force-$1
-	make proof PROOF=$1	
-endef
-$(foreach proof,$(PROOFS),$(eval $(call make-proof-target,$(proof))))
-
-
-
 run-all-proofs: $(PROOF_TARGETS)
 
+run-$1: test_results/$1/$1_bmc/PASS
 
-check-proof: 
-ifndef PROOF
-	$(error PROOF is undefined)
-endif
+rerun-$1: 
+	rm test_results/$1/$1_bmc/PASS
+	make -j1 test_results/$1/$1_bmc/PASS
+
+test_results/$1/$1_bmc/PASS: 
+	mkdir -p "test_results/$1"
+	python3 rv.py --proof $1 generate -t il "test_results/$1/top.il"	
+	cp skeleton.sby "test_results/$1/$1.sby"		
+	cd "test_results/$1/"  && sby -f "$1.sby"
+endef
+
+$(foreach proof,$(PROOFS),$(eval $(call make-proof-target,$(proof))))
+
+clean:
+	rm -rf test_results
 

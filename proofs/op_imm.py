@@ -1,4 +1,4 @@
-from nmigen import Const, Signal, ResetSignal
+from nmigen import Const, Signal, ResetSignal, signed
 from nmigen.asserts import Assert
 from opcodes import Opcode, OpImm
 from proofs.verification import ProofOverTicks
@@ -35,7 +35,6 @@ class ProofOppImm(ProofOverTicks):
                 & last.itype.match(opcode=Opcode.OpImm, funct3=self.funct3(), rs1=rs1, rd=rd, imm=imm) 
                 & rs1_value_matcher
             ):
-
                 comb += Assert(now.r[rd] == result)
 
     def examples(self): #[(rs1, rs1_val, rd, imm, value)]
@@ -47,6 +46,9 @@ class ProofOppImm(ProofOverTicks):
     def general_proof_expr(self, last_rs1_val, last_imm):
         raise Exception("Must be overwritten")
 
+    def additional_check(self):
+        return Const(1)
+
     def run_general(self):        
         """ General proof """
         m = self.module
@@ -56,16 +58,19 @@ class ProofOppImm(ProofOverTicks):
         last = self.time[1]
         now = self.time[0]
 
-        with m.If(last.itype.match(opcode=Opcode.OpImm, funct3=self.funct3()) & last.input_ready):
-            with m.If(last.itype.rd == 0):
-                comb += Assert(now.r[0] == 0)
-            with m.Else():
-                expecetd = Signal(core.xlen, name=f"{self.__class__.__name__}_expected")
-                comb += expecetd.eq(self.general_proof_expr(last.r[last.itype.rs1], last.itype.imm))
-                comb += Assert(expecetd == now.r[last.itype.rd])
+        with m.If(self.additional_check()):
+            with m.If(last.itype.match(opcode=Opcode.OpImm, funct3=self.funct3()) & last.input_ready):
+                with m.If(last.itype.rd == 0):
+                    comb += Assert(now.r[0] == 0)
+                with m.Else():
+                    expected = Signal(core.xlen, name=f"{self.__class__.__name__}_expected")
+                    actual =  Signal(core.xlen, name=f"{self.__class__.__name__}_got")
+                    comb += actual.eq(now.r[last.itype.rd])
+                    comb += expected.eq(self.general_proof_expr(last.r[last.itype.rs1], last.itype.imm))
+                    comb += Assert(expected == actual)
 
-            now.assert_pc_advanced(m, last)                
-            now.assert_same_gpr_but_one(m, last.r, last.itype.rd)
+                now.assert_pc_advanced(m, last)                
+                now.assert_same_gpr_but_one(m, last.r, last.itype.rd)
 
 class ProofAddI(ProofOppImm):
     def examples(self):
@@ -108,3 +113,49 @@ class ProofXorI(ProofOppImm):
         return OpImm.XOR
     def general_proof_expr(self, last_rs1, last_imm):
         return last_rs1 ^ last_imm
+
+
+
+class ProofSLLI(ProofOppImm):
+    def funct3(self):
+        return OpImm.SHIFT_LEFT
+    def examples(self):
+                #RS1 RS1VAL RD   IMM     RESULT
+        return [(3,  0b0101, 2,  3,     0b0101000),
+                (3,  0b0101, 2,  0,     0b0101)]
+    def general_proof_expr(self, last_rs1, last_imm):
+        return (last_rs1 << last_imm[:5])[:32]
+
+
+
+class ProofSRLI(ProofOppImm):
+    def funct3(self):
+        return OpImm.SHIFT_RIGHT
+    def examples(self):
+                #RS1 RS1VAL    RD   IMM     RESULT
+        return [(3,  0b0101000, 2,  3,     0b0101),
+                (3,  -1,        2,  2,     (1<<30)-1 )]
+    def additional_check(self):
+        return self.time[1].itype.imm[5:12] == 0
+    def general_proof_expr(self, last_rs1, last_imm):
+        result = (last_rs1 >> last_imm[:5])
+        return result
+
+class ProofSRAI(ProofOppImm):
+    def funct3(self):
+        return OpImm.SHIFT_RIGHT
+
+    def additional_check(self):
+        return self.time[1].itype.imm[10] == 1
+
+    def examples(self):
+                #RS1 RS1VAL     RD   IMM               RESULT
+        return [(3,  0b0101000, 2,  3 | (1 << 10),     0b0101),
+                (3,  -1,        2,  2 | (1 << 10),     -1 )]
+    def general_proof_expr(self, last_rs1, last_imm):
+        m = self.module
+        core = self.uut
+        signed_rs1 = Signal(signed(core.xlen), name="proof_srai_signed")
+        m.d.comb += signed_rs1.eq(last_rs1)
+        return (signed_rs1 >> last_imm[:5])[:32]
+

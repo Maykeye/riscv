@@ -8,7 +8,7 @@ from nmigen import Mux
 from membuild import MemBuild
 
 #from proofs.addi import ProofAddI
-from proofs.op_imm import ProofAddI, ProofOrI, ProofAndI, ProofXorI
+from proofs.op_imm import ProofAddI, ProofOrI, ProofAndI, ProofXorI, ProofSLLI, ProofSRLI, ProofSRAI
 
 class OpImmInstr(Instruction):
     
@@ -99,7 +99,7 @@ class OpImmInstr(Instruction):
 
 
     def proofs(self):
-        return [ProofAddI, ProofOrI, ProofAndI, ProofXorI]
+        return [ProofAddI, ProofOrI, ProofAndI, ProofXorI,ProofSLLI,ProofSRLI, ProofSRAI]
         
 
 
