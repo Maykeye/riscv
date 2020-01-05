@@ -1,4 +1,4 @@
-from encoding import IType
+from encoding import IType, JType
 from opcodes import Opcode, OpImm
 
 class MemBuild:
@@ -19,9 +19,17 @@ class MemBuild:
         self.pc += 4
         return self
 
+    def mv(self, rd, rs1):
+        return self.addi(rd, rs1, 0)
     def addi(self, rd, rs1, imm):
         """ ADDI instruction implementation """
         return self.add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=rd, rs1=rs1, imm=imm)) 
+
+    def jal(self, imm, rd=0):
+        return self.add_i32(JType.build_i32(opcode=Opcode.Jal, imm=imm, rd=rd))
+
+    def nop(self):
+        return self.mv(0, 0)
 
 if __name__ == "__main__":
     m = MemBuild(0)
