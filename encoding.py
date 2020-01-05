@@ -139,7 +139,7 @@ class JType:
     def elaborate(self, comb:List[Statement], input:Signal):
         comb += self.opcode.eq(input[0:7])
         comb += self.rd.eq(input[7:12])
-        comb += self.imm.eq(Cat(Const(0, 1), input[21:31], input[20], input[12:20], input[31]))
+        comb += self.imm.eq(Cat(Const(0, 1), input[21:31], input[20], input[12:20], Repl(input[31], 12)))
     
     def match(self, opcode=None, rd=None, imm=None) -> Value:
         """ Build boolean expression that matches x against provided parts """
@@ -283,26 +283,28 @@ class __Verify:
         return []
 
     def verify_jtype(self, m):
-        if False:
-            sig = self.build_signal(m, "U", [(0,6,"1001011"), (7,11, "10000"), 
-                (12,19,"00100010"),
-                (20,20,"1"),
-                (21,30,"1011000111"),
-                (31,31,"1")])
+    
+        
+        sig = self.build_signal(m, "U", [(0,6,"1001011"), (7,11, "10000"), 
+            (12,19,"00100010"),
+            (20,20,"1"),
+            (21,30,"1011000111"),
+            (31,31,"1")])
 
-            j = JType("jtype")
-            j.elaborate(m.d.comb, sig)
-            m.d.comb += Assert(j.opcode == Const(0b1001011, 7))
-            m.d.comb += Assert(j.rd == Const(0b10000, 5))
-            m.d.comb += Assert(j.imm == Const(0b100100010110110001110, 32))
+        j = JType("jtype")
+        j.elaborate(m.d.comb, sig)
+        m.d.comb += Assert(j.opcode == Const(0b1001011, 7))
+        m.d.comb += Assert(j.rd == Const(0b10000, 5))
+        m.d.comb += Assert(j.imm == Const(0b1111_1111_1111_0010_0010_1101_1000_1110, 32))
 
-            m.d.comb += Assert(j.match(opcode=0b1001011))
-            m.d.comb += Assert(j.match(opcode=0b1001010)==0)
-            m.d.comb += Assert(j.match(rd=0b10000))
-            m.d.comb += Assert(j.match(rd=0b00001)==0)
-            m.d.comb += Assert(j.match(imm=0b100100010110110001110))
-            m.d.comb += Assert(j.match(imm=0b110100010110110001110)==0)
-            m.d.comb += Assert(j.match(opcode=0b1001011, rd=0b10000, imm=0b100100010110110001110))
+        m.d.comb += Assert(j.match(opcode=0b1001011))
+        m.d.comb += Assert(j.match(opcode=0b1001010)==0)
+        m.d.comb += Assert(j.match(rd=0b10000))
+        m.d.comb += Assert(j.match(rd=0b00001)==0)
+        m.d.comb += Assert(j.match(imm=0b1111_1111_1111_0010_0010_1101_1000_1110)) #extra bits - sign ext
+                                         
+        m.d.comb += Assert(j.match(imm=0b110100010110110001110)==0)
+        m.d.comb += Assert(j.match(opcode=0b1001011, rd=0b10000, imm=0b1111_1111_1111_0010_0010_1101_1000_1110))
 
 
         j_builder_check = Signal(32)
@@ -313,11 +315,22 @@ class __Verify:
 
         built_jtype = JType.build_i32(opcode=j_builder_opcode, rd=j_builder_rd, imm=j_builder_imm)
         m.d.comb += j_builder_check.eq(built_jtype)
-        j = JType("jtype.x")
+        j = JType("jtype.build")
         j.elaborate(m.d.comb, built_jtype)
         m.d.comb += Assert(j_builder_opcode == j.opcode)
         m.d.comb += Assert(j_builder_rd == j.rd)
-        m.d.comb += Assert(j_builder_imm == j.imm[0:22])
+        m.d.comb += Assert(j_builder_imm == j.imm[0:21])
+
+
+        j = JType("jtype.se")
+        j.elaborate(m.d.comb, Const(0x8000_0000, 32))
+        m.d.comb += Assert(j.imm[20] == 1)
+        m.d.comb += Assert(j.imm[31] == 1)
+
+        j = JType("jtype.ze")
+        j.elaborate(m.d.comb, Const(0x7FFF_FFFF, 32))
+        m.d.comb += Assert(j.imm[20] == 0)
+        m.d.comb += Assert(j.imm[31] == 0)
 
         return [j_builder_check, j_builder_opcode, j_builder_rd, j_builder_imm]
 
