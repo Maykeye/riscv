@@ -193,6 +193,9 @@ class Core(ElaboratableAbstract):
         self.current_module.d.comb += self.next_pc.eq(self.r.pc + advance_by)
         self.current_module.d.comb += self.advance_pc.eq(1)
 
+    def assign_gpr(self, idx:Value, value:Value):
+        self.iclk += self.r[idx].eq(value)
+
     def advance_pc_if_needed(self):
         m = self.current_module
         with m.If(self.advance_pc):
