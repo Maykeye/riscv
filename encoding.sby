@@ -12,8 +12,8 @@ multiclock off
 smtbmc boolector
 
 [script]
-read_verilog -sv encoding.sv
+read_ilang  encoding.il
 prep -top top
 
 [files]
-encoding.sv
+encoding.il

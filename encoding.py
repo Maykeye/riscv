@@ -4,8 +4,10 @@ from nmigen.hdl.ast import Statement
 
 # for verification
 from nmigen import Module
-from nmigen.asserts import Assert
+from nmigen.asserts import Assert, Assume
 from nmigen.cli import main_parser, main_runner
+
+from skeleton import bit_slice
 
 class RType:
     def __init__(self, prefix=""):
@@ -139,6 +141,35 @@ class JType:
         comb += self.rd.eq(input[7:12])
         comb += self.imm.eq(Cat(Const(0, 1), input[21:31], input[20], input[12:20], input[31]))
     
+    def match(self, opcode=None, rd=None, imm=None) -> Value:
+        """ Build boolean expression that matches x against provided parts """
+        if type(imm) == int:
+            assert imm.bit_length() <= 32, "imm must be 32 bit long(12 bits+signext)"
+            assert imm % 2 == 0, "jtype has 2-byte offset"
+            imm = imm & (2**32)-1
+        subexpressions = []
+        if opcode is not None: subexpressions.append(self.opcode.matches(opcode))
+        if rd is not None: subexpressions.append(self.rd.matches(rd))
+        if imm is not None: subexpressions.append(self.imm.matches(imm))
+
+        if not subexpressions:
+            print("warning: no matches provided for jtype.match")
+            return Const(1)
+        res = subexpressions.pop(0)
+        while subexpressions:
+            res = res & subexpressions.pop(0)
+        return res
+
+    @staticmethod
+    def build_i32(opcode:int=0, rd:int=0, imm:int=0)->int:        
+        if type(imm) == int:
+            assert -2**21 <= imm < 2**21
+            assert imm % 2 == 0
+        imm = imm & ((2**21)-1)
+
+        word = (opcode) | (rd << 7) | (bit_slice(imm, 10, 1) << 21) | (bit_slice(imm,11,11) << 20) | (bit_slice(imm, 19,12) << 12) 
+        word = word | (bit_slice(imm,20,20) << 31)
+        return word
 
 
 
@@ -167,6 +198,7 @@ class __Verify:
         m.d.comb += Assert(r.rs1 == Const(2, 5))
         m.d.comb += Assert(r.rs2 == Const(3, 5))
         m.d.comb += Assert(r.funct7 == Const(0b0111111, 7))
+        return []
 
     def verify_itype(self, m):
         sig = self.build_signal(m, "I", [(0,6,"1001011"), (7,11, "10000"), (12,14,"001"), (15, 19, "00010"), (20,31,"000110111111")])
@@ -205,7 +237,7 @@ class __Verify:
 
 
         built_itype = IType.build_i32(i_builder_opcode, i_builder_rd, i_builder_funct3, i_builder_rs1, i_builder_imm, ensure_ints=False)
-        m.d.comp += i_builder_check.eq(built_itype)
+        m.d.comb += i_builder_check.eq(built_itype)
         i = IType("itype.s")
         i.elaborate(m.d.comb, built_itype)
         m.d.comb += Assert(i_builder_opcode == i.opcode)
@@ -226,6 +258,7 @@ class __Verify:
         m.d.comb += Assert(s.rs1 == Const(2, 5))
         m.d.comb += Assert(s.rs2 == Const(3, 5))
         m.d.comb += Assert(s.imm == Const(0b011111110000, 12))
+        return []
 
     def verify_btype(self, m):
         sig = self.build_signal(m, "B", [(0,6,"1001011"), (7,7, "1"), (8,11,"0000"), (12,14,"001"), (15, 19, "00010"), (20,24,"00011"), 
@@ -237,6 +270,7 @@ class __Verify:
         m.d.comb += Assert(b.rs1 == Const(2, 5))
         m.d.comb += Assert(b.rs2 == Const(3, 5))
         m.d.comb += Assert(b.imm == Const(0b1101111100000, 13))
+        return []
 
      
     def verify_utype(self, m):
@@ -246,29 +280,57 @@ class __Verify:
         m.d.comb += Assert(u.opcode == Const(0b1001011, 7))
         m.d.comb += Assert(u.rd == Const(0b10000, 5))
         m.d.comb += Assert(u.imm == Const(0b00100010000110111111000000000000, 32))
+        return []
 
     def verify_jtype(self, m):
-        sig = self.build_signal(m, "U", [(0,6,"1001011"), (7,11, "10000"), 
-            (12,19,"00100010"),
-            (20,20,"1"),
-            (21,30,"1011000111"),
-            (31,31,"1")])
+        if False:
+            sig = self.build_signal(m, "U", [(0,6,"1001011"), (7,11, "10000"), 
+                (12,19,"00100010"),
+                (20,20,"1"),
+                (21,30,"1011000111"),
+                (31,31,"1")])
 
-        j = JType("jtype")
-        j.elaborate(m.d.comb, sig)
-        m.d.comb += Assert(j.opcode == Const(0b1001011, 7))
-        m.d.comb += Assert(j.rd == Const(0b10000, 5))
-        m.d.comb += Assert(j.imm == Const(0b100100010110110001110, 32))
+            j = JType("jtype")
+            j.elaborate(m.d.comb, sig)
+            m.d.comb += Assert(j.opcode == Const(0b1001011, 7))
+            m.d.comb += Assert(j.rd == Const(0b10000, 5))
+            m.d.comb += Assert(j.imm == Const(0b100100010110110001110, 32))
+
+            m.d.comb += Assert(j.match(opcode=0b1001011))
+            m.d.comb += Assert(j.match(opcode=0b1001010)==0)
+            m.d.comb += Assert(j.match(rd=0b10000))
+            m.d.comb += Assert(j.match(rd=0b00001)==0)
+            m.d.comb += Assert(j.match(imm=0b100100010110110001110))
+            m.d.comb += Assert(j.match(imm=0b110100010110110001110)==0)
+            m.d.comb += Assert(j.match(opcode=0b1001011, rd=0b10000, imm=0b100100010110110001110))
+
+
+        j_builder_check = Signal(32)
+        j_builder_opcode = Signal(7)
+        j_builder_rd = Signal(5)
+        j_builder_imm = Signal(21)
+        m.d.comb += Assume(j_builder_imm[0] == 0)
+
+        built_jtype = JType.build_i32(opcode=j_builder_opcode, rd=j_builder_rd, imm=j_builder_imm)
+        m.d.comb += j_builder_check.eq(built_jtype)
+        j = JType("jtype.x")
+        j.elaborate(m.d.comb, built_jtype)
+        m.d.comb += Assert(j_builder_opcode == j.opcode)
+        m.d.comb += Assert(j_builder_rd == j.rd)
+        m.d.comb += Assert(j_builder_imm == j.imm[0:22])
+
+        return [j_builder_check, j_builder_opcode, j_builder_rd, j_builder_imm]
+
 
     def main(self):
         m = Module()
         ports=[]
-        self.verify_rtype(m)
+        ports += self.verify_rtype(m)
         ports += self.verify_itype(m)
-        self.verify_stype(m)
-        self.verify_btype(m)
-        self.verify_utype(m)
-        self.verify_jtype(m)
+        ports += self.verify_stype(m)
+        ports += self.verify_btype(m)
+        ports += self.verify_utype(m)
+        ports += self.verify_jtype(m)
 
 
         parser = main_parser()
