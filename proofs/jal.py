@@ -56,7 +56,7 @@ class ProofJal(ProofOverTicks):
 
     def simulate(self):
         return (MemBuild(0x200) 
-            .jal(0x100-4)
+            .j(0x100-4)
 
             .set_origin(0x300)
             .jal(imm=-20, rd=1) #300

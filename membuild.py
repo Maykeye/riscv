@@ -25,8 +25,10 @@ class MemBuild:
         """ ADDI instruction implementation """
         return self.add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=rd, rs1=rs1, imm=imm)) 
 
-    def jal(self, imm, rd=0):
+    def jal(self, imm, rd):
         return self.add_i32(JType.build_i32(opcode=Opcode.Jal, imm=imm, rd=rd))
+    def j(self, imm):
+        return self.jal(imm,0)
 
     def nop(self):
         return self.mv(0, 0)
