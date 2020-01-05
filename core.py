@@ -189,7 +189,7 @@ class Core(ElaboratableAbstract):
                 domain += self.debug_value.eq(x)
 
     def move_pc_to_next_instr(self, advance_by=4):
-        """ Schedule pc """
+        """ Schedule pc to pc+advance_by """
         self.current_module.d.comb += self.next_pc.eq(self.r.pc + advance_by)
         self.current_module.d.comb += self.advance_pc.eq(1)
 
