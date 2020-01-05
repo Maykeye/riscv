@@ -3,7 +3,7 @@ from nmigen.asserts import Assert, Past
 from core import Core
 from register_file import RegisterFile
 from typing import Optional, List
-from encoding import IType
+from encoding import IType, JType
 from skeleton import SeqPast
 
 class VerificationRegisterFile:
@@ -19,11 +19,20 @@ class VerificationRegisterFile:
         comb += self.r.pc.eq(Past(core.r.pc, past))
 
         # TODO: move to additional structure
-        self.itype = IType(prefix=f"{prefix}_i")
+        self.itype = IType(prefix=f"{prefix}_i")        
         self.itype.elaborate(comb, Past(core.input_data[0], past))
-        self.input_ready = Signal.like(core.input_ready, name=f"{prefix}_input_ready")
+
+        self.jtype = JType(prefix=f"{prefix}_j")
+        self.jtype.elaborate(comb, Past(core.input_data[0], past))
+
+        self.input_ready = Signal.like(core.input_ready, name=f"{prefix}_input_ready")        
         comb += self.input_ready.eq(Past(core.input_ready, past))
         
+    def assert_same_gpr(self, m:Core, other:RegisterFile):
+        comb = m.d.comb
+
+        for i in range(self.r.main_gpr_count()):
+            comb += Assert(self.r[i] == other[i])
 
     
     def assert_same_gpr_but_one(self, m:Core, other:RegisterFile, skip:Value):        
@@ -86,3 +95,7 @@ class ProofOverTicks:
     def run_tick_proof(self, steps_back : int):
         """ Utility function for proofs that might require different proves over different times """
         pass
+
+    def simulate(self):
+        """ Run simulation. If proof doesn't has special simulation demo, instruction.simulation() will be called"""
+        raise Exception("Must be implemented in child class")

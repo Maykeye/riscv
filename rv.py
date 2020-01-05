@@ -3,6 +3,7 @@ from nmigen.cli import main_parser, main_runner
 
 from core import Core
 from instructions.op_imm import OpImmInstr
+from instructions.jal import JalInstr
 from clock_info import ClockInfo
 import sys 
 import alu 
@@ -22,25 +23,35 @@ def main():
     parser.add_argument("--proof", type=str, help="generate signle proof")
     args=parser.parse_args()
     required_proof = args.proof
-    proof_generated=False
 
 
     instr = core.add_instruction(OpImmInstr())
-    for proof_class in instr.proofs():        
-        
-        proof_name = proof_class.__name__.lower()
-        if proof_name.startswith("proof"):
-            proof_name=proof_name[len("proof"):]            
-        if required_proof is None or proof_name == args.proof:
-            proof_class().run(m, core)
-            proof_generated=True
-    if required_proof is not None and not proof_generated:
+    instr = core.add_instruction(JalInstr())
+    proof_instance=None
+    generate_proof="generate" in sys.argv
+    all_proofs = [proof 
+                    for instruction in core.instructions
+                    for proof in instruction.proofs() ]
+    
+    if required_proof:
+        for proof_class in all_proofs:
+            proof_name = proof_class.__name__.lower()
+            if proof_name.startswith("proof"):
+                proof_name=proof_name[len("proof"):]            
+            
+            if required_proof == "ALL" or proof_name == required_proof:
+                proof_instance = proof_class()
+                if generate_proof:
+                    proof_instance.run(m, core)
+    if required_proof is not None and not proof_instance:
         raise Exception(f"Unknown proof {required_proof}")
-
-    #core.simulate(m, clock, OpImmInstr.simulate())
+        
 
     if "generate" in sys.argv:
         main_runner(parser, args, m, ports=core.ports())
+    else:
+        assert proof_instance, "use --proof proof to run simulation from proof/instruction"
+        core.simulate(m, clock, proof_instance.simulate())
 
 
 if __name__ == "__main__":
