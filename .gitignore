@@ -8,4 +8,5 @@ ltp.dot
 *_prove/*
 *_cover/*
 waves/*
-tests_results/
+*.swp
+test_results

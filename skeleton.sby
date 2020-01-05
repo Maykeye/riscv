@@ -1,20 +1,17 @@
 [tasks]
 bmc
-cover
 
 [options]
-cover: mode cover
 bmc: mode bmc
-
-depth 24
+depth 5
 multiclock off
 
 [engines]
-smtbmc boolector
+smtbmc z3
 
 [script]
-read_verilog -sv core.sv
+read_ilang top.il
 prep -top top
 
 [files]
-core.sv
+top.il
