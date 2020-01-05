@@ -17,7 +17,6 @@ class ProofJal(ProofOverTicks):
 
 
     def run_main_proof(self):
-        in_reset = self.uut.in_reset
         m = self.module
         with m.If(self.time[1].input_ready):
             self.run_general()
