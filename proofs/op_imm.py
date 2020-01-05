@@ -62,6 +62,7 @@ class ProofOppImm(ProofOverTicks):
             with m.If(last.itype.match(opcode=Opcode.OpImm, funct3=self.funct3()) & last.input_ready):
                 with m.If(last.itype.rd == 0):
                     comb += Assert(now.r[0] == 0)
+                    now.assert_same_gpr(m, last.r)
                 with m.Else():
                     expected = Signal(core.xlen, name=f"{self.__class__.__name__}_expected")
                     actual =  Signal(core.xlen, name=f"{self.__class__.__name__}_got")
