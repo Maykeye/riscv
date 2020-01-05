@@ -17,7 +17,7 @@ from skeleton import muS
 from instruction import Instruction
 from opcodes import DebugOpcode, OpAlu
 from register_file import RegisterFile
-from encoding import IType, UType
+from encoding import IType, UType, JType
 from clock_info import ClockInfo
 from alu import ALU
 from shifter import Shifter
@@ -70,6 +70,7 @@ class Core(ElaboratableAbstract):
 
         self.itype = IType("itype")
         self.utype = UType("utype")
+        self.jtype = JType("jtype")
 
         self.in_reset = Signal(reset=1)
         self.cycle = Signal(4)
@@ -98,6 +99,7 @@ class Core(ElaboratableAbstract):
         self.iclk = m.d.i
         self.itype.elaborate(m.d.comb, self.input_data[0])
         self.utype.elaborate(m.d.comb, self.input_data[0])
+        self.jtype.elaborate(m.d.comb, self.input_data[0])
         
         m.d.comb += self.alu.en.eq(0)
         m.d.comb += self.advance_pc.eq(0)

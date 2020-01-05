@@ -2,7 +2,7 @@ import re
 import sys
 from typing import List, Callable, Union, Tuple
 
-from nmigen import Elaboratable, Module, Signal, signed, unsigned, Cat
+from nmigen import Elaboratable, Module, Signal, signed, unsigned, Cat, Value
 from nmigen.back.pysim import Simulator, Delay
 from nmigen.hdl.ast import Statement
 from nmigen.build import Platform
@@ -126,7 +126,17 @@ def dump_inputs(from_module:Module, to_module : Module, prefix="", suffix="") ->
     return input_copies
 
 
+def bit_slice(n : int, hi:int, lo:int):
+    """ returns n[hi:lo] bits (inclusive hi and lo)"""
+    if isinstance(n, Value):
+        _n : Value = n
+        return _n.bit_select(lo, (hi-lo)+1)
 
+    shifted = n >> lo 
+    width = hi - lo + 1
+    mask = (1 << width) - 1
+    bits = shifted & mask
+    return bits
 
 def as_signed(m : Module, signal:Signal):
     """ Create a new copy of signal, but marked as signed """
