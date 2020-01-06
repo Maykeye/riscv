@@ -137,6 +137,7 @@ class Core(ElaboratableAbstract):
                     if first:
                         with m.If(instr.check()):
                             instr.implement()
+                        first = False
                     else:
                         with m.Elif(instr.check()):
                             instr.implement()
