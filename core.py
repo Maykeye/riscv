@@ -144,6 +144,7 @@ class Core(ElaboratableAbstract):
                 with m.Else():
                     self.emit_debug_opcode(DebugOpcode.INVALID)
                     self.move_pc_to_next_instr()
+                    #TODO: add reg instruction_executed and check it instead?
         with m.Else():
             iclk += self.mem2core_seq.eq(1)
             iclk += self.mem2core_en.eq(1)
@@ -189,10 +190,13 @@ class Core(ElaboratableAbstract):
             if x is not None:
                 domain += self.debug_value.eq(x)
 
+    def assign_pc(self, new_pc_value):
+        self.current_module.d.comb += self.next_pc.eq(new_pc_value)
+        self.current_module.d.comb += self.advance_pc.eq(1)
+
     def move_pc_to_next_instr(self, advance_by=4):
         """ Schedule pc to pc+advance_by """
-        self.current_module.d.comb += self.next_pc.eq(self.r.pc + advance_by)
-        self.current_module.d.comb += self.advance_pc.eq(1)
+        self.assign_pc(self.r.pc + advance_by)
 
     def assign_gpr(self, idx:Value, value:Value):
         # R0 will be reassigned to 0 at the end of elaborate()

@@ -1,4 +1,4 @@
-PROOFS=addi ori andi xori slli srli srai jal lui auipc
+PROOFS=addi ori andi xori slli srli srai jal jalr lui auipc
 
 PROOF_TARGETS = $(addprefix run-, $(PROOFS))
 

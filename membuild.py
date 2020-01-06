@@ -26,6 +26,8 @@ class MemBuild:
         return self.add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=rd, rs1=rs1, imm=imm)) 
     def jal(self, imm, rd):
         return self.add_i32(JType.build_i32(opcode=Opcode.Jal, imm=imm, rd=rd))
+    def jalr(self, rd, rs1, imm):
+        return self.add_i32(IType.build_i32(opcode=Opcode.Jalr, funct3=0, rd=rd, rs1=rs1, imm=imm)) 
     def j(self, imm):
         return self.jal(imm,0)
     def lui(self, rd, imm):

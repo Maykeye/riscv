@@ -5,6 +5,7 @@ from core import Core
 
 from instructions.op_imm import OpImmInstr
 from instructions.jal import JalInstr
+from instructions.jalr import JalrInstr
 from instructions.lui import LuiInstr
 from instructions.auipc import AuipcInstr
 
@@ -31,6 +32,7 @@ def main():
 
 
     core.add_instruction(OpImmInstr())
+    core.add_instruction(JalrInstr())
     core.add_instruction(JalInstr())
     core.add_instruction(LuiInstr())
     core.add_instruction(AuipcInstr())

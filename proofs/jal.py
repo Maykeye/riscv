@@ -53,7 +53,7 @@ class ProofJal(ProofOverTicks):
                 now.assert_same_gpr_but_one(m, last.r, last.jtype.rd)
                 comb += Assert(now.r[last.jtype.rd] == (last.r.pc+4)[0:32])
             comb += Assert(now.r.pc == (last.r.pc+last.jtype.imm)[0:32])
-
+            
     def simulate(self):
         return (MemBuild(0x200) 
             .j(0x100)
@@ -65,6 +65,4 @@ class ProofJal(ProofOverTicks):
             .set_origin(0x2F0)
             .addi(rs1=1,rd=2,imm=0) #x2=304
             .nop()
-
-            .dict
-        )
+    ).dict

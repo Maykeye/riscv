@@ -3,6 +3,7 @@ from enum import IntEnum, auto
 class Opcode(IntEnum):
     OpImm = 0b0010011
     Jal   = 0b1101111
+    Jalr  = 0b1100111
     Lui   = 0b0110111
     Auipc = 0b0010111
 
@@ -43,6 +44,7 @@ class DebugOpcode(IntEnum):
     SRA_imm = auto()
     SRL_imm = auto()
     JAL=auto()
+    JALR=auto()
     LUI=auto()
     AUIPC=auto()
 
