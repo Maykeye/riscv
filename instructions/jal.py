@@ -17,7 +17,7 @@ class JalInstr(Instruction):
         core : Core = self.core
         
         core.assign_gpr(core.jtype.rd, core.r.pc + 4)
-        core.move_pc_to_next_instr(core.jtype.imm+4)
+        core.move_pc_to_next_instr(core.jtype.imm)
         core.emit_debug_opcode(DebugOpcode.JAL, core.jtype.imm)
 
     def proofs(self):

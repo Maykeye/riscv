@@ -32,12 +32,12 @@ class ProofJal(ProofOverTicks):
         now = self.time[0]
 
         with m.If(last.jtype.match(opcode=Opcode.Jal, rd=1, imm=-4)):
-            comb += Assert(now.r.pc == last.r.pc)
+            comb += Assert(now.r.pc == (last.r.pc-4)[0:32])
             comb += Assert(now.r[1] == (last.r.pc+4)[0:32])
         with m.If(last.jtype.match(opcode=Opcode.Jal, imm=0)):
-            comb += Assert(now.r.pc == (last.r.pc+4)[0:32])
+            comb += Assert(now.r.pc == (last.r.pc)[0:32])
         with m.If(last.jtype.match(opcode=Opcode.Jal, imm=4)):
-            comb += Assert(now.r.pc == (last.r.pc+8)[0:32])
+            comb += Assert(now.r.pc == (last.r.pc+4)[0:32])
             
 
     def run_general(self):        
@@ -51,14 +51,14 @@ class ProofJal(ProofOverTicks):
                 now.assert_same_gpr(m, last.r)
             with m.Else():
                 now.assert_same_gpr_but_one(m, last.r, last.jtype.rd)
-            comb += Assert(now.r.pc == (last.r.pc+4+last.jtype.imm)[0:32])
+            comb += Assert(now.r.pc == (last.r.pc+last.jtype.imm)[0:32])
 
     def simulate(self):
         return (MemBuild(0x200) 
-            .j(0x100-4)
+            .j(0x100)
 
             .set_origin(0x300)
-            .jal(imm=-20, rd=1) #300
+            .jal(imm=-16, rd=1) #300
             .nop() #304
 
             .set_origin(0x2F0)
