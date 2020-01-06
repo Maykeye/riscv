@@ -113,7 +113,7 @@ class UType:
     def build_i32(opcode:int=0, rd:int=0, imm:int=0)->int:        
         if type(imm) == int:
             assert imm.bit_length() <= 32, "imm must be 32 bit long(12 bits+signext)"
-            assert imm & ((1<<13)-1) == 0, "lower 12 bits must be zero"
+            assert imm & ((1<<12)-1) == 0, "lower 12 bits must be zero"
         imm = imm & 0xFFFFFFFF
 
         word = (opcode) | (rd << 7) | (bit_slice(imm, 31, 12) << 12) 
@@ -416,7 +416,6 @@ class __Verify:
     
     
 
-    
 
 if __name__ == "__main__":
     __Verify().main()

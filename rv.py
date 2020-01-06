@@ -2,8 +2,11 @@ from nmigen import Module, Signal, ClockSignal, ClockDomain
 from nmigen.cli import main_parser, main_runner
 
 from core import Core
+
 from instructions.op_imm import OpImmInstr
 from instructions.jal import JalInstr
+from instructions.lui import LuiInstr
+
 from clock_info import ClockInfo
 import sys 
 import alu 
@@ -27,6 +30,8 @@ def main():
 
     instr = core.add_instruction(OpImmInstr())
     instr = core.add_instruction(JalInstr())
+    instr = core.add_instruction(LuiInstr())
+    
     proof_instance=None
     generate_proof="generate" in sys.argv
     all_proofs = [proof 

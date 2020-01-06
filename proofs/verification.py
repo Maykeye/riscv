@@ -3,7 +3,7 @@ from nmigen.asserts import Assert, Past
 from core import Core
 from register_file import RegisterFile
 from typing import Optional, List
-from encoding import IType, JType
+from encoding import IType, JType, UType
 from skeleton import SeqPast
 
 class VerificationRegisterFile:
@@ -25,6 +25,9 @@ class VerificationRegisterFile:
         self.jtype = JType(prefix=f"{prefix}_j")
         self.jtype.elaborate(comb, Past(core.input_data[0], past))
 
+        self.utype = UType(prefix=f"{prefix}_u")
+        self.utype.elaborate(comb, Past(core.input_data[0], past))
+
         self.input_ready = Signal.like(core.input_ready, name=f"{prefix}_input_ready")        
         comb += self.input_ready.eq(Past(core.input_ready, past))
         
@@ -42,7 +45,7 @@ class VerificationRegisterFile:
             with m.If(skip != i):
                 comb += Assert(self.r[i] == other[i])
 
-    def assert_pc_advanced(self, m:Core, previous:RegisterFile):
+    def assert_pc_advanced(self, m:Module, previous:RegisterFile):
         comb = m.d.comb
         comb += Assert(self.r.pc == (previous.r.pc + 4)[:self.r.pc.width])
 

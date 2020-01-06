@@ -1,4 +1,4 @@
-from encoding import IType, JType
+from encoding import IType, JType, UType
 from opcodes import Opcode, OpImm
 
 class MemBuild:
@@ -29,7 +29,8 @@ class MemBuild:
         return self.add_i32(JType.build_i32(opcode=Opcode.Jal, imm=imm, rd=rd))
     def j(self, imm):
         return self.jal(imm,0)
-
+    def lui(self, rd, imm):
+        return self.add_i32(UType.build_i32(Opcode.Lui, rd, imm))
     def nop(self):
         return self.mv(0, 0)
 
