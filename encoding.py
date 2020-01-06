@@ -109,7 +109,36 @@ class UType:
         comb += self.rd.eq(input[7:12])
         comb += self.imm.eq(Cat(Const(0, 12), input[12:32]))
     
-        
+    @staticmethod
+    def build_i32(opcode:int=0, rd:int=0, imm:int=0)->int:        
+        if type(imm) == int:
+            assert imm.bit_length() <= 32, "imm must be 32 bit long(12 bits+signext)"
+            assert imm & ((1<<13)-1) == 0, "lower 12 bits must be zero"
+        imm = imm & 0xFFFFFFFF
+
+        word = (opcode) | (rd << 7) | (bit_slice(imm, 31, 12) << 12) 
+        return word
+
+    def match(self, opcode=None, rd=None, imm=None) -> Value:
+        """ Build boolean expression that matches x against provided parts """
+        if type(imm) == int:
+            assert imm.bit_length() <= 32, "imm must be 32 bit long(12 bits+signext)"
+            assert imm & ((1<<12)-1) == 0, "lower 12 bits must be zero"
+            imm = imm & (2**32)-1
+        subexpressions = []
+        if opcode is not None: subexpressions.append(self.opcode.matches(opcode))
+        if rd is not None: subexpressions.append(self.rd.matches(rd))
+        if imm is not None: subexpressions.append(self.imm.matches(imm))
+
+        if not subexpressions:
+            print("warning: no matches provided for jtype.match")
+            return Const(1)
+        res = subexpressions.pop(0)
+        while subexpressions:
+            res = res & subexpressions.pop(0)
+        return res
+
+       
 class BType:
     def __init__(self, prefix=""):
         if prefix:
@@ -273,14 +302,49 @@ class __Verify:
         return []
 
      
-    def verify_utype(self, m):
+    def verify_utype(self, m):        
         sig = self.build_signal(m, "U", [(0,6,"1001011"), (7,11, "10000"), (12,31,"00100010000110111111")])
         u = UType("utype")
         u.elaborate(m.d.comb, sig)
         m.d.comb += Assert(u.opcode == Const(0b1001011, 7))
         m.d.comb += Assert(u.rd == Const(0b10000, 5))
         m.d.comb += Assert(u.imm == Const(0b00100010000110111111000000000000, 32))
-        return []
+
+        m.d.comb += Assert(u.match(opcode=0b1001011))
+        m.d.comb += Assert(u.match(rd=0b10000))
+        m.d.comb += Assert(u.match(imm=0b00100010000110111111000000000000))
+
+        m.d.comb += Assert(u.match(opcode=0b1011011)==0)
+        m.d.comb += Assert(u.match(rd=0b11000)==0)
+        m.d.comb += Assert(u.match(imm=0b10100010000110111111000000000000)==0)
+
+        m.d.comb += Assert(u.match(opcode=0b1001011, rd=0b10000, imm=0b00100010000110111111000000000000))
+
+
+        u = UType("utype.sign")
+        u.elaborate(m.d.comb, Const(0x8000_0000, 32))
+        m.d.comb += Assert(u.imm[31] == 1)
+
+        u = UType("utype.trailzero")
+        u.elaborate(m.d.comb, Const(0xFFFF_FFFF, 32))
+        m.d.comb += Assert(u.imm.bit_select(0,12) == 0)
+        
+        u_builder_check = Signal(32)
+        u_builder_opcode = Signal(7)
+        u_builder_rd = Signal(5)
+        u_builder_imm = Signal(20)
+        m.d.comb += Assume(u_builder_imm[0:12] == 0)
+
+        built_utype = UType.build_i32(opcode=u_builder_opcode, rd=u_builder_rd, imm=u_builder_imm)
+        m.d.comb += u_builder_check.eq(built_utype)
+        u = UType("utype.build")        
+        u.elaborate(m.d.comb, built_utype)
+        m.d.comb += Assert(u_builder_opcode == u.opcode)
+        m.d.comb += Assert(u_builder_rd == u.rd)
+        m.d.comb += Assert(Cat(Repl(0, 12), u_builder_imm[12:32]) == u.imm)
+
+        
+        return [u_builder_check, u_builder_opcode, u_builder_rd, u_builder_imm]
 
     def verify_jtype(self, m):
     
