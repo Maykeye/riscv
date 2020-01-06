@@ -194,9 +194,9 @@ class Core(ElaboratableAbstract):
         self.current_module.d.comb += self.next_pc.eq(new_pc_value)
         self.current_module.d.comb += self.advance_pc.eq(1)
 
-    def move_pc_to_next_instr(self, advance_by=4):
-        """ Schedule pc to pc+advance_by """
-        self.assign_pc(self.r.pc + advance_by)
+    def move_pc_to_next_instr(self):
+        """ Move PC to the start of the next instruction """
+        self.assign_pc(self.r.pc + 4)
 
     def assign_gpr(self, idx:Value, value:Value):
         # R0 will be reassigned to 0 at the end of elaborate()
