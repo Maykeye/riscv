@@ -51,6 +51,7 @@ class ProofJal(ProofOverTicks):
                 now.assert_same_gpr(m, last.r)
             with m.Else():
                 now.assert_same_gpr_but_one(m, last.r, last.jtype.rd)
+                comb += Assert(now.r[last.jtype.rd] == (last.r.pc+4)[0:32])
             comb += Assert(now.r.pc == (last.r.pc+last.jtype.imm)[0:32])
 
     def simulate(self):
