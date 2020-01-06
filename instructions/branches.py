@@ -3,7 +3,7 @@ from nmigen import Module, Signal, Mux, Const, Value
 from instruction import Instruction
 from core import Core
 from opcodes import Opcode, DebugOpcode, OpBranch
-from proofs.branches import ProofBEQ
+from proofs.branches import ProofBEQ, ProofBNE
 from typing import List
 
 class BranchBase(Instruction):
@@ -53,10 +53,7 @@ class BranchBase(Instruction):
 
     def decode_debug_opcode(self):
         core : Core = self.core
-        m = core.current_module
-        with m.If(core.btype.funct3[2] == 0):
-            return self.debug_opcodes()[0]
-        return self.debug_opcodes()[1]
+        return Mux(core.btype.funct3[0], self.debug_opcodes()[1], self.debug_opcodes()[0])
 
 
 class BeqBneInstr(BranchBase):    
@@ -67,4 +64,4 @@ class BeqBneInstr(BranchBase):
     def debug_opcodes(self):
         return [DebugOpcode.BEQ, DebugOpcode.BNE]
     def proofs(self):
-        return [ProofBEQ]
+        return [ProofBEQ, ProofBNE]

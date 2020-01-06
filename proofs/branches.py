@@ -40,7 +40,6 @@ class ProofBranchBase(ProofOverTicks):
 class ProofBEQ(ProofBranchBase):
     def op_branch(self): 
         return OpBranch.BEQ
-
         
     def run_general(self):       
         last = self.time[1]
@@ -56,6 +55,28 @@ class ProofBEQ(ProofBranchBase):
             .addi(11, 0, 1)
             .beq(11, 0, 0x100)
             .beq(11, 10, 0x100)
+            .set_origin(0x30c)                        
+            .nop()
+        ).dict
+
+class ProofBNE(ProofBranchBase):
+    def op_branch(self): 
+        return OpBranch.BNE
+        
+    def run_general(self):       
+        last = self.time[1]
+        m = self.module 
+        with m.If(last.r[last.btype.rs1] == last.r[last.btype.rs2]):
+            self.assert_no_jump_taken()            
+        with m.Else():
+            self.assert_jump_was_taken()
+            
+    def simulate(self):
+        return (MemBuild(0x200) 
+            .addi(10, 0, 2)
+            .addi(11, 0, 2)
+            .bne(11, 10, 0x100)
+            .bne(11, 0, 0x100)
             .set_origin(0x30c)                        
             .nop()
         ).dict
