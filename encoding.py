@@ -156,6 +156,24 @@ class BType:
         comb += self.rs2.eq(input[20:25])
         comb += self.imm.eq(Cat(Const(0,1), input[8:12], input[25:31], input[7], Repl(input[31], 20)))
 
+    @staticmethod
+    def build_i32(opcode, funct3, rs1, rs2, imm):
+        if type(imm) == int:
+            assert imm % 2 == 0
+            assert imm.bit_length() <= 32, "imm must be 32 bit long"
+            imm = imm & (2**32)-1
+        value = opcode
+        value = value | (funct3 << 12) 
+        value = value | (rs1 << 15) 
+        value = value | (rs2 << 20) 
+        value = value | ((bit_slice(imm, 4, 1)) << 8)
+        value = value | ((bit_slice(imm, 10, 5)) << 25)
+        value = value | ((bit_slice(imm, 11, 11)) << 7)
+        value = value | ((bit_slice(imm, 12, 12)) << 31)
+
+        return value
+
+
     def match(self, opcode=None, funct3=None, rs1=None, rs2=None, imm=None) -> Value:
         """ Build boolean expression that matches x against provided parts """
         if type(imm) == int:
@@ -332,7 +350,24 @@ class __Verify:
         m.d.comb += Assert(b.match(opcode=0b1001011, funct3=1, rs1=2, rs2=3, imm=0b11111111111111111111101111100000))
         m.d.comb += Assert(~b.match(opcode=0b1001011, funct3=3, rs1=1, rs2=5, imm=0b11111111111111111111101111100000))
 
-        return []
+
+        b_builder_check = Signal(32)
+        b_builder_opcode = Signal(7)
+        b_builder_f3 = Signal(3)
+        b_builder_rs1 = Signal(5)
+        b_builder_rs2 = Signal(5)
+        b_builder_imm = Signal(13)
+        m.d.comb += Assume(b_builder_imm[0] == 0)
+
+        built_btype = BType.build_i32(opcode = b_builder_opcode, funct3=b_builder_f3, rs1=b_builder_rs1, rs2=b_builder_rs2, imm=b_builder_imm)
+        m.d.comb += b_builder_check.eq(built_btype)
+        b = BType("btype.build")
+        b.elaborate(m.d.comb, built_btype)
+        m.d.comb += Assert(b_builder_opcode == b.opcode)        
+        m.d.comb += Assert(b_builder_imm == Cat(Const(0,1), b.imm[1:13]))
+        m.d.comb += Assert(b.imm[13:32] == Repl(b_builder_imm[12], 32-13))
+
+        return [b_builder_check, b_builder_opcode, b_builder_f3, b_builder_rs1, b_builder_rs2, b_builder_imm]
 
      
     def verify_utype(self, m):        
