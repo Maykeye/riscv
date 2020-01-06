@@ -6,6 +6,17 @@ class Opcode(IntEnum):
     Jalr  = 0b1100111
     Lui   = 0b0110111
     Auipc = 0b0010111
+    Branch= 0b1100011
+
+class OpBranch(IntEnum):
+    """ Funct3 for use with Branch """
+    BEQ  = 0b000
+    BNE  = 0b001
+    BLT  = 0b100
+    BGE  = 0b101
+    BLTU = 0b110
+    BGEU = 0b111
+
 
 class OpImm(IntEnum):
     ADD  = 0b000,
@@ -47,5 +58,10 @@ class DebugOpcode(IntEnum):
     JALR=auto()
     LUI=auto()
     AUIPC=auto()
-
+    BEQ=auto()
+    BNE=auto()
+    BLT=auto()
+    BGE=auto()
+    BLTU=auto()
+    BGEU=auto()
     UNREACHABLE = auto()

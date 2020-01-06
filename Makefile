@@ -1,4 +1,4 @@
-PROOFS=addi ori andi xori slli srli srai jal jalr lui auipc
+PROOFS=addi ori andi xori slli srli srai jal jalr lui auipc beq
 
 PROOF_TARGETS = $(addprefix run-, $(PROOFS))
 
@@ -9,8 +9,11 @@ run-all-proofs: $(PROOF_TARGETS)
 run-$1: test_results/$1/$1_bmc/PASS
 
 rerun-$1: 
-	rm test_results/$1/$1_bmc/PASS
+	rm -f test_results/$1/$1_bmc/PASS
 	make -j1 test_results/$1/$1_bmc/PASS
+
+sim-$1:
+	python3 rv.py --proof $1
 
 test_results/$1/$1_bmc/PASS: 
 	mkdir -p "test_results/$1"

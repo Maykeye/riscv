@@ -8,6 +8,7 @@ from instructions.jal import JalInstr
 from instructions.jalr import JalrInstr
 from instructions.lui import LuiInstr
 from instructions.auipc import AuipcInstr
+from instructions.branches import BeqBneInstr
 
 
 from clock_info import ClockInfo
@@ -36,6 +37,7 @@ def main():
     core.add_instruction(JalInstr())
     core.add_instruction(LuiInstr())
     core.add_instruction(AuipcInstr())
+    core.add_instruction(BeqBneInstr())
     
     proof_instance=None
     generate_proof="generate" in sys.argv

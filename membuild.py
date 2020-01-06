@@ -1,5 +1,5 @@
-from encoding import IType, JType, UType
-from opcodes import Opcode, OpImm
+from encoding import IType, JType, UType, BType
+from opcodes import Opcode, OpImm, OpBranch
 
 class MemBuild:
     def __init__(self, pc=0x0, existing_dict=None):
@@ -36,6 +36,8 @@ class MemBuild:
         return self.mv(0, 0)
     def auipc(self, rd, imm):
         return self.add_i32(UType.build_i32(opcode=Opcode.Auipc, rd=rd, imm=imm))
+    def beq(self, rs1, rs2, imm):
+        return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BEQ, rs1=rs1, rs2=rs2, imm=imm))
 
 if __name__ == "__main__":
     m = MemBuild(0)

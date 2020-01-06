@@ -3,7 +3,7 @@ from nmigen.asserts import Assert, Past
 from core import Core
 from register_file import RegisterFile
 from typing import Optional, List
-from encoding import IType, JType, UType
+from encoding import IType, JType, UType, BType
 from skeleton import SeqPast
 
 class VerificationRegisterFile:
@@ -28,26 +28,30 @@ class VerificationRegisterFile:
         self.utype = UType(prefix=f"{prefix}_u")
         self.utype.elaborate(comb, Past(core.input_data[0], past))
 
+        self.btype = BType(prefix=f"{prefix}_b")
+        self.btype.elaborate(comb, Past(core.input_data[0], past))
+
         self.input_ready = Signal.like(core.input_ready, name=f"{prefix}_input_ready")        
         comb += self.input_ready.eq(Past(core.input_ready, past))
         
-    def assert_same_gpr(self, m:Core, other:RegisterFile):
+    def assert_same_gpr(self, m:Core, other:RegisterFile, src_loc_at=1):
         comb = m.d.comb
 
         for i in range(self.r.main_gpr_count()):
-            comb += Assert(self.r[i] == other[i])
+            comb += Assert(self.r[i] == other[i], src_loc_at=src_loc_at)
 
     
-    def assert_same_gpr_but_one(self, m:Core, other:RegisterFile, skip:Value):        
+    def assert_same_gpr_but_one(self, m:Core, other:RegisterFile, skip:Value, src_loc_at=1):
         comb = m.d.comb
 
         for i in range(self.r.main_gpr_count()):
             with m.If(skip != i):
-                comb += Assert(self.r[i] == other[i])
+                comb += Assert(self.r[i] == other[i], src_loc_at=src_loc_at)
 
-    def assert_pc_advanced(self, m:Module, previous:RegisterFile):
+    def assert_pc_advanced(self, m:Module, previous:RegisterFile, src_loc_at=1):
+        #TODO: previous is not a RF
         comb = m.d.comb
-        comb += Assert(self.r.pc == (previous.r.pc + 4)[:self.r.pc.width])
+        comb += Assert(self.r.pc == (previous.r.pc + 4)[:self.r.pc.width], src_loc_at=src_loc_at)
 
 
 class ProofOverTicks:
