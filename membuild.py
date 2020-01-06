@@ -24,7 +24,6 @@ class MemBuild:
     def addi(self, rd, rs1, imm):
         """ ADDI instruction implementation """
         return self.add_i32(IType.build_i32(opcode=Opcode.OpImm, funct3=OpImm.ADD, rd=rd, rs1=rs1, imm=imm)) 
-
     def jal(self, imm, rd):
         return self.add_i32(JType.build_i32(opcode=Opcode.Jal, imm=imm, rd=rd))
     def j(self, imm):
@@ -33,6 +32,8 @@ class MemBuild:
         return self.add_i32(UType.build_i32(Opcode.Lui, rd, imm))
     def nop(self):
         return self.mv(0, 0)
+    def auipc(self, rd, imm):
+        return self.add_i32(UType.build_i32(opcode=Opcode.Auipc, rd=rd, imm=imm))
 
 if __name__ == "__main__":
     m = MemBuild(0)

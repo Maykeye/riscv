@@ -4,6 +4,7 @@ class Opcode(IntEnum):
     OpImm = 0b0010011
     Jal   = 0b1101111
     Lui   = 0b0110111
+    Auipc = 0b0010111
 
 class OpImm(IntEnum):
     ADD  = 0b000,
@@ -43,5 +44,6 @@ class DebugOpcode(IntEnum):
     SRL_imm = auto()
     JAL=auto()
     LUI=auto()
+    AUIPC=auto()
 
     UNREACHABLE = auto()

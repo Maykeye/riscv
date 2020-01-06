@@ -194,6 +194,7 @@ class Core(ElaboratableAbstract):
         self.current_module.d.comb += self.advance_pc.eq(1)
 
     def assign_gpr(self, idx:Value, value:Value):
+        # R0 will be reassigned to 0 at the end of elaborate()
         self.iclk += self.r[idx].eq(value)
 
     def advance_pc_if_needed(self):
