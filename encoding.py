@@ -131,7 +131,7 @@ class UType:
         if imm is not None: subexpressions.append(self.imm.matches(imm))
 
         if not subexpressions:
-            print("warning: no matches provided for jtype.match")
+            print("warning: no matches provided for utype.match")
             return Const(1)
         res = subexpressions.pop(0)
         while subexpressions:
@@ -147,16 +147,40 @@ class BType:
         self.funct3 = Signal(3,name=f"{prefix}funct3")
         self.rs1 = Signal(5,name=f"{prefix}rs1")
         self.rs2 = Signal(5,name=f"{prefix}rs2")
-        self.imm = Signal(13,name=f"{prefix}imm3")
+        self.imm = Signal(32,name=f"{prefix}imm")
 
     def elaborate(self, comb:List[Statement], input:Signal):
         comb += self.opcode.eq(input[0:7])
         comb += self.funct3.eq(input[12:15])
         comb += self.rs1.eq(input[15:20])
         comb += self.rs2.eq(input[20:25])
-        comb += self.imm.eq(Cat(Const(0,1), input[8:12], input[25:31], input[7], input[31]))
+        comb += self.imm.eq(Cat(Const(0,1), input[8:12], input[25:31], input[7], Repl(input[31], 20)))
+
+    def match(self, opcode=None, funct3=None, rs1=None, rs2=None, imm=None) -> Value:
+        """ Build boolean expression that matches x against provided parts """
+        if type(imm) == int:
+            # TOOD: other types need it as well
+            assert imm.bit_length() <= 32, "imm must be 32 bit long"
+            assert imm % 2 == 0, "btype has 2-byte offset"
+            # TODO: check ~20 hi bits of imm == sigen ext
+            imm = imm & (2**32)-1
+        subexpressions = []
+        if opcode is not None: subexpressions.append(self.opcode.matches(opcode))
+        if funct3 is not None: subexpressions.append(self.funct3.matches(funct3))
+        if rs1 is not None: subexpressions.append(self.rs1.matches(rs1))
+        if rs2 is not None: subexpressions.append(self.rs2.matches(rs2))
+        if imm is not None: subexpressions.append(self.imm.matches(imm))
+
+        if not subexpressions:
+            print("warning: no matches provided for btype.match")
+            return Const(1)
+        res = subexpressions.pop(0)
+        while subexpressions:
+            res = res & subexpressions.pop(0)
+        return res
 
         
+
 class JType:
     def __init__(self, prefix=""):
         if prefix:
@@ -298,7 +322,16 @@ class __Verify:
         m.d.comb += Assert(b.funct3 == Const(1, 3))
         m.d.comb += Assert(b.rs1 == Const(2, 5))
         m.d.comb += Assert(b.rs2 == Const(3, 5))
-        m.d.comb += Assert(b.imm == Const(0b1101111100000, 13))
+        m.d.comb += Assert(b.imm == Cat(Const(0b1101111100000, 13), Repl(1, 19)))
+
+        m.d.comb += Assert(b.match(opcode=0b1001011))
+        m.d.comb += Assert(b.match(rs1=2))
+        m.d.comb += Assert(b.match(rs2=3))        
+        m.d.comb += Assert(b.match(funct3=1))
+        m.d.comb += Assert(b.match(imm=0b11111111111111111111101111100000))
+        m.d.comb += Assert(b.match(opcode=0b1001011, funct3=1, rs1=2, rs2=3, imm=0b11111111111111111111101111100000))
+        m.d.comb += Assert(~b.match(opcode=0b1001011, funct3=3, rs1=1, rs2=5, imm=0b11111111111111111111101111100000))
+
         return []
 
      
