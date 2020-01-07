@@ -40,6 +40,15 @@ class MemBuild:
         return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BEQ, rs1=rs1, rs2=rs2, imm=imm))
     def bne(self, rs1, rs2, imm):
         return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BNE, rs1=rs1, rs2=rs2, imm=imm))
+    def blt(self, rs1, rs2, imm):
+        return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BLT, rs1=rs1, rs2=rs2, imm=imm))
+    def bge(self, rs1, rs2, imm):
+        return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BGE, rs1=rs1, rs2=rs2, imm=imm))
+    def bltu(self, rs1, rs2, imm):
+        return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BLTU, rs1=rs1, rs2=rs2, imm=imm))
+    def bgeu(self, rs1, rs2, imm):
+        return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BGEU, rs1=rs1, rs2=rs2, imm=imm))
+
 
 if __name__ == "__main__":
     m = MemBuild(0)
