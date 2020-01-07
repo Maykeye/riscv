@@ -9,10 +9,10 @@ from membuild import MemBuild
 
 
 class ProofBranchBase(ProofOverTicks):
-    def op_branch(
-        self) -> OpBranch: raise Exception("Not implemented in the child class")
-    def run_general(self): raise Exception(
-        "Not implemented in the child class")
+    def op_branch(self) -> OpBranch: 
+        raise Exception("Not implemented in the child class")
+    def run_general(self): 
+        raise Exception("Not implemented in the child class")
 
     def run_main_proof(self):
         m = self.module
