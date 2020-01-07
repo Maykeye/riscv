@@ -164,3 +164,82 @@ class ProofBGE(ProofBranchBase):
         return (MemBuild(0x200)
                 .nop()
         ).dict
+
+
+class ProofBLTU(ProofBranchBase):
+    def op_branch(self):
+        return OpBranch.BLTU
+
+    def run_general(self):
+        last = self.time[1]
+        m = self.module
+        core: Core = self.uut
+        comb = m.d.comb
+
+        bltu_lhs = Signal(unsigned(core.xlen))
+        bltu_rhs = Signal(unsigned(core.xlen))
+        bltu_res = Signal(name="bltu_res")
+
+        comb += bltu_lhs.eq(last.r[last.btype.rs1])
+        comb += bltu_rhs.eq(last.r[last.btype.rs2])
+        comb += bltu_res.eq(bltu_lhs < bltu_rhs)
+
+        with m.If(bltu_res):
+            self.assert_jump_was_taken()
+        with m.Else():
+            self.assert_no_jump_taken()
+
+        bltu_lhs_bz = Signal()                       # bz = below-zero in signed variant
+        bltu_rhs_bz = Signal()
+        comb += bltu_lhs_bz.eq(bltu_lhs[core.xlen-1])
+        comb += bltu_rhs_bz.eq(bltu_rhs[core.xlen-1])
+
+        with m.If(bltu_lhs_bz & (~bltu_rhs_bz)):
+            self.assert_no_jump_taken()
+        with m.Elif((~bltu_lhs_bz) & (bltu_rhs_bz)):
+            self.assert_jump_was_taken()
+
+    def simulate(self):
+        return (MemBuild(0x200)
+                .nop()
+        ).dict
+
+class ProofBGEU(ProofBranchBase):
+    def op_branch(self):
+        return OpBranch.BGEU
+
+    def run_general(self):
+        last = self.time[1]
+        m = self.module
+        core: Core = self.uut
+        comb = m.d.comb
+
+        lhs = Signal(unsigned(core.xlen))
+        rhs = Signal(unsigned(core.xlen))
+        bgeu_res = Signal(name="bgeu_res")
+
+        comb += lhs.eq(last.r[last.btype.rs1])
+        comb += rhs.eq(last.r[last.btype.rs2])
+        comb += bgeu_res.eq(lhs >= rhs)
+
+        with m.If(bgeu_res):
+            self.assert_jump_was_taken()
+        with m.Else():
+            self.assert_no_jump_taken()
+
+        lhs_bz = Signal()                       # bz = below-zero in signed  representation
+        rhs_bz = Signal()
+        comb += lhs_bz.eq(lhs[core.xlen-1])
+        comb += rhs_bz.eq(rhs[core.xlen-1])
+
+        with m.If(lhs_bz & (~rhs_bz)):
+            self.assert_jump_was_taken()            
+        with m.Elif((~lhs_bz) & (rhs_bz)):
+            self.assert_no_jump_taken()
+            
+
+    def simulate(self):
+        return (MemBuild(0x200)
+                .nop()
+        ).dict
+

@@ -1,9 +1,9 @@
-from nmigen import Module, Signal, Mux, Const, Value, signed
+from nmigen import Module, Signal, Mux, Const, Value, signed, unsigned
 
 from instruction import Instruction
 from core import Core
 from opcodes import Opcode, DebugOpcode, OpBranch
-from proofs.branches import ProofBEQ, ProofBNE, ProofBLT, ProofBGE
+from proofs.branches import ProofBEQ, ProofBNE, ProofBLT, ProofBGE, ProofBLTU, ProofBGEU
 from typing import List
 from skeleton import as_signed
 
@@ -87,4 +87,21 @@ class BltBgeInstr(BranchBase):
     def proofs(self):
         return [ProofBLT, ProofBGE]
 
-        
+class BltuBgeuInstr(BranchBase):    
+    def comparison_impl(self, rv1, rv2):
+        core : Core = self.core
+        m = core.current_module
+        comb = m.d.comb
+
+        rv1_unsigned = Signal(unsigned(core.xlen))
+        rv2_unsigned = Signal(unsigned(core.xlen))
+        comb += rv1_unsigned.eq(rv1)
+        comb += rv2_unsigned.eq(rv2)    
+        return rv1_unsigned < rv2_unsigned
+
+    def op_branch(self):
+        return OpBranch.BLTU
+    def debug_opcodes(self):
+        return [DebugOpcode.BLTU, DebugOpcode.BGEU]
+    def proofs(self):
+        return [ProofBLTU, ProofBGEU]

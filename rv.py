@@ -8,7 +8,7 @@ from instructions.jal import JalInstr
 from instructions.jalr import JalrInstr
 from instructions.lui import LuiInstr
 from instructions.auipc import AuipcInstr
-from instructions.branches import BeqBneInstr, BltBgeInstr
+from instructions.branches import BeqBneInstr, BltBgeInstr, BltuBgeuInstr
 
 
 from clock_info import ClockInfo
@@ -32,6 +32,7 @@ def main():
     required_proof = args.proof
 
 
+    # RV32I
     core.add_instruction(OpImmInstr())
     core.add_instruction(JalrInstr())
     core.add_instruction(JalInstr())
@@ -39,6 +40,7 @@ def main():
     core.add_instruction(AuipcInstr())
     core.add_instruction(BeqBneInstr())
     core.add_instruction(BltBgeInstr())
+    core.add_instruction(BltuBgeuInstr())
     
     proof_instance=None
     generate_proof="generate" in sys.argv
