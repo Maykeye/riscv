@@ -1,10 +1,11 @@
-from nmigen import Module, Signal, Mux, Const, Value
+from nmigen import Module, Signal, Mux, Const, Value, signed
 
 from instruction import Instruction
 from core import Core
 from opcodes import Opcode, DebugOpcode, OpBranch
-from proofs.branches import ProofBEQ, ProofBNE
+from proofs.branches import ProofBEQ, ProofBNE, ProofBLT, ProofBGE
 from typing import List
+from skeleton import as_signed
 
 class BranchBase(Instruction):
 
@@ -65,3 +66,25 @@ class BeqBneInstr(BranchBase):
         return [DebugOpcode.BEQ, DebugOpcode.BNE]
     def proofs(self):
         return [ProofBEQ, ProofBNE]
+
+
+class BltBgeInstr(BranchBase):    
+    def comparison_impl(self, rv1, rv2):
+        core : Core = self.core
+        m = core.current_module
+        comb = m.d.comb
+
+        rv1_signed = Signal(signed(core.xlen))
+        rv2_signed = Signal(signed(core.xlen))
+        comb += rv1_signed.eq(rv1)
+        comb += rv2_signed.eq(rv2)    
+        return rv1_signed < rv2_signed
+
+    def op_branch(self):
+        return OpBranch.BLT
+    def debug_opcodes(self):
+        return [DebugOpcode.BLT, DebugOpcode.BGE]
+    def proofs(self):
+        return [ProofBLT, ProofBGE]
+
+        

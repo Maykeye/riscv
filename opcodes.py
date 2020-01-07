@@ -40,28 +40,35 @@ class OpAlu(IntEnum):
 
 
 class DebugOpcode(IntEnum):
+    
     NOP=auto()
     INVALID=auto()
     AWAIT_READ=auto()
     IN_RESET=auto()
+    
     NOT_SPECIFIED=auto()
     ADD_imm  = auto()
     SLL_imm  = auto()
     SLT_imm  = auto()
+    
     SLTIU_imm = auto()
     XOR_imm  = auto()
     OR_imm   = auto()
     AND_imm  = auto()
+    
     SRA_imm = auto()
     SRL_imm = auto()
     JAL=auto()
     JALR=auto()
+    
     LUI=auto()
     AUIPC=auto()
     BEQ=auto()
     BNE=auto()
+    
     BLT=auto()
     BGE=auto()
     BLTU=auto()
     BGEU=auto()
+
     UNREACHABLE = auto()
