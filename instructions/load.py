@@ -3,7 +3,7 @@ from nmigen import Module, Signal, Mux, Const, Value, Cat, Repl
 from instruction import Instruction
 from core import Core
 from opcodes import Opcode, DebugOpcode, OpLoad
-from proofs.load import ProofLB
+from proofs.load import ProofLB, ProofLBU
 
 
 class LoadBase(Instruction):
@@ -62,3 +62,21 @@ class LbInstr(LoadBase):
 
     def proofs(self):
         return [ProofLB]
+
+
+class LbuInstr(LoadBase):
+    # TODO: merge with LB
+    def funct3(self):
+        return OpLoad.LBU
+
+    def process_load(self, input_value):
+        lb_value = Signal(32)
+        comb = self.core.current_module.d.comb
+        comb += lb_value.eq(Cat(input_value[0:8], Repl(0, 24)))
+        return lb_value
+
+    def debug_opcode(self):
+        return DebugOpcode.LBU
+
+    def proofs(self):
+        return [ProofLBU]

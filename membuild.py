@@ -50,6 +50,8 @@ class MemBuild:
         return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BGEU, rs1=rs1, rs2=rs2, imm=imm))
     def lb(self, rd, rs1, imm):
         return self.add_i32(IType.build_i32(opcode=Opcode.Load, rd=rd, funct3=OpLoad.LB, rs1=rs1, imm=imm))
+    def lbu(self, rd, rs1, imm):
+        return self.add_i32(IType.build_i32(opcode=Opcode.Load, rd=rd, funct3=OpLoad.LBU, rs1=rs1, imm=imm))
 
 if __name__ == "__main__":
     m = MemBuild(0)

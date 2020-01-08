@@ -65,7 +65,6 @@ class ProofLoadBase(ProofOverTicks):
                 
 
 class ProofLB(ProofLoadBase):
-    
     def op_load(self):
         return OpLoad.LB
     
@@ -87,6 +86,33 @@ class ProofLB(ProofLoadBase):
             .lb(1, 0, 0x100)
             .lb(2, 0, 0x104)
             .lb(3, 0, 0x101)
+            .nop()
+            .nop()
+            .nop()
+            .nop()
+            .nop()
+            .nop()
+        ).dict
+
+class ProofLBU(ProofLoadBase):
+    def op_load(self):
+        return OpLoad.LBU
+    
+    def match(self, rv, input):
+        m : Module = self.module
+        comb = m.d.comb
+        comb += Assert(rv[0:8] == input[0:8])
+        comb += Assert(rv[8:32] == 0)
+        
+    def simulate(self):
+        return (MemBuild() 
+            .set_origin(0x100)
+            .add_i32(0x12345678)
+            .add_i32(0xF0E0B0C0)
+            .set_origin(0x200)
+            .lbu(1, 0, 0x100)
+            .lbu(2, 0, 0x104)
+            .lbu(3, 0, 0x101)
             .nop()
             .nop()
             .nop()
