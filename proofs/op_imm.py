@@ -31,10 +31,11 @@ class ProofOppImm(ProofOverTicks):
             rs1_value_matcher = (last.r[rs1] == rs1_val) if rs1_val is not None else Const(1)
 
             with m.If(Const(1)
-                & last.input_ready 
+                & last.at_instruction_start()
                 & last.itype.match(opcode=Opcode.OpImm, funct3=self.funct3(), rs1=rs1, rd=rd, imm=imm) 
                 & rs1_value_matcher
             ):
+
                 comb += Assert(now.r[rd] == result)
 
     def examples(self): #[(rs1, rs1_val, rd, imm, value)]
@@ -58,8 +59,8 @@ class ProofOppImm(ProofOverTicks):
         last = self.time[1]
         now = self.time[0]
 
-        with m.If(self.additional_check()):
-            with m.If(last.itype.match(opcode=Opcode.OpImm, funct3=self.funct3()) & last.input_ready):
+        with m.If(self.additional_check() & last.at_instruction_start()):
+            with m.If(last.itype.match(opcode=Opcode.OpImm, funct3=self.funct3())):
                 with m.If(last.itype.rd == 0):
                     comb += Assert(now.r[0] == 0)
                     now.assert_same_gpr(m, last.r)

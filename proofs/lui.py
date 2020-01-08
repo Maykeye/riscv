@@ -18,7 +18,7 @@ class ProofLui(ProofOverTicks):
 
     def run_main_proof(self):
         m = self.module
-        with m.If(self.time[1].input_ready & (self.time[1].utype.opcode == Opcode.Lui)):
+        with m.If(self.time[1].at_instruction_start() & (self.time[1].utype.opcode == Opcode.Lui)):
             self.run_general()
             self.run_example()
 

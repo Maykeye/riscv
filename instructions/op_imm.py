@@ -30,15 +30,17 @@ class OpImmInstr(Instruction):
         with m.Switch(core.itype.funct3):
             # TODO: report error if imm_hi is neither 0 nor ([10]=1 with [rest]=0)
             with m.Case(OpImm.SHIFT_LEFT):
-                core.call_left_shift(core.r[core.itype.rd], core.r[core.itype.rs1], shift_amout)
+                core.assign_gpr(core.itype.rd, core.call_left_shift(core.query_rs1(), shift_amout))
             with m.Case(OpImm.SHIFT_RIGHT):
-                core.call_right_shift(core.r[core.itype.rd], core.r[core.itype.rs1], shift_amout,
-                    core.r[core.itype.rs1][core.xlen-1] & core.itype.imm[OpImmInstr.IMM_SHR_ARITH_BIT])
+                msb = core.query_rs1()[core.xlen-1] & core.itype.imm[OpImmInstr.IMM_SHR_ARITH_BIT]
+                shift_res = core.call_right_shift(core.query_rs1(), shift_amout, msb)
+                core.assign_gpr(core.itype.rd, shift_res)
 
             with m.Default():
-                core.call_alu(core.r[core.itype.rd], core.itype.funct3, core.r[core.itype.rs1], core.itype.imm)
+                alu_res = core.call_alu(core.itype.funct3, core.query_rs1(), core.itype.imm)
+                core.assign_gpr(core.itype.rd, alu_res)                
         
-        self.core.emit_debug_opcode(self.encode_debug_opcode(), self.core.r.pc)
+        self.core.emit_debug_opcode(self.encode_debug_opcode(), self.core.pc)
         self.core.move_pc_to_next_instr()
 
     def encode_debug_opcode(self) -> Signal:

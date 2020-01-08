@@ -29,9 +29,7 @@ class ProofLoadBase(ProofOverTicks):
         m : Module = self.module
         comb = m.d.comb
 
-        
-
-        with m.If((first.input_ready) & first.itype.match(opcode=Opcode.Load, funct3=self.op_load())  & (first.cycle == 0)):      
+        with m.If(first.at_instruction_start() & first.itype.match(opcode=Opcode.Load, funct3=self.op_load())):
             check_only = None
             #check_only = 3
 

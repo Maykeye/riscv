@@ -18,7 +18,7 @@ class ProofAuipc(ProofOverTicks):
 
     def run_main_proof(self):
         m = self.module
-        with m.If(self.time[1].input_ready & (self.time[1].utype.opcode == Opcode.Auipc)):
+        with m.If(self.time[1].at_instruction_start() & (self.time[1].utype.opcode == Opcode.Auipc)):
             self.run_general()
             self.run_example()
 

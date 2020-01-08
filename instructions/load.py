@@ -25,7 +25,7 @@ class LoadBase(Instruction):
         iclk = core.iclk
         m = core.current_module
 
-        read_address = (core.r[core.itype.rs1] + core.itype.imm)[:32]
+        read_address = (core.query_rs1() + core.itype.imm)[:32]
         core.emit_debug_opcode(self.debug_opcode(), read_address)
 
         #core.process_cycle(0)
@@ -37,7 +37,7 @@ class LoadBase(Instruction):
         with m.Elif(core.cycle == 1):
             with m.If(core.input_ready[0]):
                 value = self.process_load(core.input_data[0])
-                core.iclk += core.r[core.itype.rd].eq(value)
+                core.assign_gpr(core.itype.rd, value)                
                 core.move_pc_to_next_instr()
             with m.Else():
                 core.emit_debug_opcode(DebugOpcode.AWAIT_READ, read_address)

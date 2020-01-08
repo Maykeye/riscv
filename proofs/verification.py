@@ -15,8 +15,8 @@ class VerificationRegisterFile:
             prefix="now"
         self.r = RegisterFile(core.xlen, prefix=prefix)
         for i in range(self.r.main_gpr_count()):
-            comb += self.r[i].eq(Past(core.r[i], past))
-        comb += self.r.pc.eq(Past(core.r.pc, past))
+            comb += self.r[i].eq(Past(core.register_file.r[i], past))
+        comb += self.r.pc.eq(Past(core.pc, past))
 
         # TODO: move to additional structure
         self.itype = IType(prefix=f"{prefix}_i")        
@@ -47,10 +47,12 @@ class VerificationRegisterFile:
 
 
 
-
         comb += self.input_ready.eq(Past(core.input_ready, past))
         for i in range(core.look_ahead):
             comb += self.input_data[i].eq(Past(core.input_data[i], past))
+
+    def at_instruction_start(self):
+        return (self.cycle == 0) & (self.input_ready[0])
 
     def assert_loading_from (self, m:Core, addr, src_loc_at=1):
         comb = m.d.comb
