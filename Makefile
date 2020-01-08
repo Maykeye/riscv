@@ -7,6 +7,12 @@ PROOF_TARGETS = $(addprefix run-, $(PROOFS))
 define make-proof-target
 run-all-proofs: $(PROOF_TARGETS)
 
+stat:
+	python3 rv.py generate -t il rv.il
+	# use ice40, as it's primal friend of yosys
+	yosys -p "read_ilang rv.il; proc; opt; flatten; synth_ice40"
+
+
 run-$1: test_results/$1/$1_bmc/PASS
 
 rerun-$1: 
