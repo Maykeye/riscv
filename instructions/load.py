@@ -5,11 +5,10 @@ from core import Core
 from opcodes import Opcode, DebugOpcode, OpLoad
 from proofs.load import ProofLB, ProofLBU
 
-
 class LoadBase(Instruction):
     def funct3(self):
         raise NotImplementedError()
-    def debug_opcode(self):
+    def debug_opcodes(self):
         raise NotImplementedError()
     def process_load(self, data) -> Value:
         raise NotImplementedError()
@@ -17,7 +16,7 @@ class LoadBase(Instruction):
     def check(self):
         """ Check that instruction can be executed """
         core : Core = self.core
-        return (core.itype.opcode == Opcode.Load) & (core.itype.funct3 == self.funct3())
+        return (core.itype.opcode == Opcode.Load) & (core.itype.funct3[0:2] == (self.funct3() & 0b11) )
 
 
     def implement(self):            
@@ -26,7 +25,8 @@ class LoadBase(Instruction):
         m = core.current_module
 
         read_address = (core.query_rs1() + core.itype.imm)[:32]
-        core.emit_debug_opcode(self.debug_opcode(), read_address)
+        debug_opcode = Mux(core.itype.funct3[2], self.debug_opcodes()[1], self.debug_opcodes()[0])
+        core.emit_debug_opcode(debug_opcode, read_address)
 
         #core.process_cycle(0)
         with m.If(core.cycle == 0):
@@ -47,36 +47,21 @@ class LoadBase(Instruction):
 
 
 
-class LbInstr(LoadBase):
+class LbLbuInstr(LoadBase):
     def funct3(self):
         return OpLoad.LB
 
     def process_load(self, input_value):
         lb_value = Signal(32)
         comb = self.core.current_module.d.comb
-        comb += lb_value.eq(Cat(input_value[0:8], Repl(input_value[7], 24)))
+        
+        bit_to_replicate=Mux(self.core.itype.funct3[2], Const(0,1), input_value[7])
+        comb += lb_value.eq(Cat(input_value[0:8], Repl(bit_to_replicate, 24)))
         return lb_value
 
-    def debug_opcode(self):
-        return DebugOpcode.LB
+    def debug_opcodes(self):
+        return [DebugOpcode.LB, DebugOpcode.LBU]
 
     def proofs(self):
-        return [ProofLB]
+        return [ProofLB, ProofLBU]
 
-
-class LbuInstr(LoadBase):
-    # TODO: merge with LB
-    def funct3(self):
-        return OpLoad.LBU
-
-    def process_load(self, input_value):
-        lb_value = Signal(32)
-        comb = self.core.current_module.d.comb
-        comb += lb_value.eq(Cat(input_value[0:8], Repl(0, 24)))
-        return lb_value
-
-    def debug_opcode(self):
-        return DebugOpcode.LBU
-
-    def proofs(self):
-        return [ProofLBU]
