@@ -38,8 +38,7 @@ class ProofBranchBase(ProofOverTicks):
         self.time[0].r.pc.eq((last.r.pc + last.btype.imm)[0:32])
 
     def assert_no_jump_taken(self):
-        self.time[0].assert_pc_advanced(
-            self.module, self.time[1], src_loc_at=2)
+        self.time[0].assert_pc_advanced(self.module, self.time[1].r, src_loc_at=2)
 
 
 class ProofBEQ(ProofBranchBase):

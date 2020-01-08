@@ -29,6 +29,7 @@ class Core(ElaboratableAbstract):
         assert xlen % 8 == 0, "register width must be octet aligned"
 
         assert look_ahead >= 1, "Core should see at least one full word ahead"
+        self.look_ahead = look_ahead
         super().__init__()
         self.clock = clock
         
@@ -74,6 +75,13 @@ class Core(ElaboratableAbstract):
         self.btype = BType("btype")
 
         self.in_reset = Signal(reset=1)
+        
+        self.last_instruction = Signal(32)
+        self.last_instruction_valid = Signal() #if true, continue execution from last_instruction, otherwise from input[0]
+        self.current_instruction_valid = Signal()
+        self.have_valid_instruction = Signal()
+        self.current_instruction = Signal(32)
+
         self.cycle = Signal(4)
         self.next_pc = Signal(xlen)
         self.advance_pc = Signal()
@@ -98,10 +106,23 @@ class Core(ElaboratableAbstract):
         m.submodules.shl = self.left_shifter
         m.submodules.shr = self.right_shifter
         self.iclk = m.d.i
-        self.itype.elaborate(m.d.comb, self.input_data[0])
-        self.utype.elaborate(m.d.comb, self.input_data[0])
-        self.btype.elaborate(m.d.comb, self.input_data[0])
-        self.jtype.elaborate(m.d.comb, self.input_data[0])
+
+        m.d.comb += self.last_instruction_valid.eq(self.cycle != 0)
+        
+
+        with m.If((self.cycle == 0) & (self.input_ready[0])):
+            m.d.comb += self.current_instruction.eq(self.input_data[0])
+            m.d.comb += self.current_instruction_valid.eq(1)
+        with m.Else():
+            m.d.comb += self.current_instruction.eq(self.last_instruction)
+            m.d.comb += self.current_instruction_valid.eq(0)
+
+        m.d.comb += self.have_valid_instruction.eq(self.current_instruction_valid | self.last_instruction_valid)
+
+        self.itype.elaborate(m.d.comb, self.current_instruction)
+        self.utype.elaborate(m.d.comb, self.current_instruction)
+        self.btype.elaborate(m.d.comb, self.current_instruction)
+        self.jtype.elaborate(m.d.comb, self.current_instruction)
         
         m.d.comb += self.alu.en.eq(0)
         m.d.comb += self.advance_pc.eq(0)
@@ -116,11 +137,13 @@ class Core(ElaboratableAbstract):
 
         self.iclk += self.r[0].eq(0)
         self.advance_pc_if_needed()
+        self.iclk += self.last_instruction.eq(self.current_instruction)
         return m
 
 
     def elaborate_impl(self, p:Platform) -> Module:
         m = self.current_module
+        comb = m.d.comb
         iclk = self.iclk
         self.emit_debug_opcode(DebugOpcode.NOT_SPECIFIED, 0)
 
@@ -131,22 +154,18 @@ class Core(ElaboratableAbstract):
             iclk += self.mem2core_addr.eq(0x200)
             iclk += self.mem2core_seq.eq(1)
             self.emit_debug_opcode(DebugOpcode.IN_RESET)     
-        with m.Elif(self.input_ready[0]):
+        with m.Elif(self.have_valid_instruction):
             # Run instruction if data is ready
-            first = True
-            with m.If(self.input_ready[0]):
-                for instr in self.instructions:
-                    if first:
-                        with m.If(instr.check()):
-                            instr.implement()
-                        first = False
-                    else:
-                        with m.Elif(instr.check()):
-                            instr.implement()
-                with m.Else():
-                    self.emit_debug_opcode(DebugOpcode.INVALID)
-                    self.move_pc_to_next_instr()
-                    #TODO: add reg instruction_executed and check it instead?
+            first = True            
+            for instr in self.instructions:
+                if_inst = m.If if first else m.Elif
+                with if_inst(instr.check()):
+                    instr.implement()
+                first = False
+            with m.Else():
+                self.emit_debug_opcode(DebugOpcode.INVALID)
+                self.move_pc_to_next_instr()
+                #TODO: add reg instruction_executed and check it instead?
         with m.Else():
             iclk += self.mem2core_seq.eq(1)
             iclk += self.mem2core_en.eq(1)
@@ -194,7 +213,7 @@ class Core(ElaboratableAbstract):
 
     def assign_pc(self, new_pc_value):
         self.current_module.d.comb += self.next_pc.eq(new_pc_value)
-        self.current_module.d.comb += self.advance_pc.eq(1)
+        self.current_module.d.comb += self.advance_pc.eq(1)        
 
     def move_pc_to_next_instr(self):
         """ Move PC to the start of the next instruction """
@@ -208,10 +227,13 @@ class Core(ElaboratableAbstract):
         m = self.current_module
         with m.If(self.advance_pc):
             self.iclk += self.r.pc.eq(self.next_pc)
-            self.iclk += self.mem2core_seq.eq(1)
-            self.iclk += self.mem2core_en.eq(1)
-            self.iclk += self.mem2core_addr.eq(self.next_pc)
+            self.schedule_read(self.next_pc, 1)
+            self.iclk += self.cycle.eq(0)            
 
+    def schedule_read(self, addr, seq):
+        self.iclk += self.mem2core_seq.eq(seq)
+        self.iclk += self.mem2core_en.eq(1)
+        self.iclk += self.mem2core_addr.eq(addr)
 
     def make_fakemem(self, m : Module, mem : Dict[int, int]):
         comb : List[Statement] = m.d.comb

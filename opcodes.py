@@ -7,6 +7,14 @@ class Opcode(IntEnum):
     Lui   = 0b0110111
     Auipc = 0b0010111
     Branch= 0b1100011
+    Load  = 0b0000011
+
+class OpLoad(IntEnum):
+    LB = 0b000
+    LH = 0b001
+    LW = 0b010
+    LBU = 0b100
+    LHU = 0b101
 
 class OpBranch(IntEnum):
     """ Funct3 for use with Branch """
@@ -59,7 +67,7 @@ class DebugOpcode(IntEnum):
     SRA_imm = auto()
     SRL_imm = auto()
     JAL=auto()
-    JALR=auto()
+    JALR=auto() #16
     
     LUI=auto()
     AUIPC=auto()
@@ -70,5 +78,11 @@ class DebugOpcode(IntEnum):
     BGE=auto()
     BLTU=auto()
     BGEU=auto()
+
+    LB = auto()
+    LH = auto()
+    LW = auto()
+    LBU = auto()
+    LHU = auto()
 
     UNREACHABLE = auto()

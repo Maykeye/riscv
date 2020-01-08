@@ -8,7 +8,6 @@ from typing import List
 from skeleton import as_signed
 
 class BranchBase(Instruction):
-
     def comparison_impl(self, rv1:Value, rv2:Value) -> Value:
         """ Compare two values that were got from registers """
         raise Exception("not overridden in child class")

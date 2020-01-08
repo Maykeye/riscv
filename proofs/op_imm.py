@@ -70,7 +70,7 @@ class ProofOppImm(ProofOverTicks):
                     comb += expected.eq(self.general_proof_expr(last.r[last.itype.rs1], last.itype.imm))
                     comb += Assert(expected == actual)
 
-                now.assert_pc_advanced(m, last)                
+                now.assert_pc_advanced(m, last.r)                
                 now.assert_same_gpr_but_one(m, last.r, last.itype.rd)
 
 class ProofAddI(ProofOppImm):

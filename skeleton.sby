@@ -3,7 +3,7 @@ bmc
 
 [options]
 bmc: mode bmc
-depth 5
+depth 10
 multiclock off
 
 [engines]

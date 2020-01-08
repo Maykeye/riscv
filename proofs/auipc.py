@@ -54,7 +54,7 @@ class ProofAuipc(ProofOverTicks):
             now.assert_same_gpr_but_one(m, last.r, last.utype.rd)
             comb += Assert(now.r[last.utype.rd] == (last.r.pc + last.utype.imm)[0:32])
 
-        now.assert_pc_advanced(m, last)
+        now.assert_pc_advanced(m, last.r)
             
 
     def simulate(self):

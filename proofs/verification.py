@@ -1,4 +1,4 @@
-from nmigen import Module, Value, Signal, Const
+from nmigen import Module, Value, Signal, Const, Array
 from nmigen.asserts import Assert, Past
 from core import Core
 from register_file import RegisterFile
@@ -31,9 +31,32 @@ class VerificationRegisterFile:
         self.btype = BType(prefix=f"{prefix}_b")
         self.btype.elaborate(comb, Past(core.input_data[0], past))
 
-        self.input_ready = Signal.like(core.input_ready, name=f"{prefix}_input_ready")        
-        comb += self.input_ready.eq(Past(core.input_ready, past))
+        self.input_ready = Signal.like(core.input_ready, name=f"{prefix}_input_ready")       
+        self.input_data = Array([Signal(core.xlen, name=f"{prefix}_input_{i}") for i in range(core.look_ahead)])
         
+        self.cycle = Signal.like(core.cycle, name=f"{prefix}_cycle")
+        comb += self.cycle.eq(Past(core.cycle, past))
+
+        # TODO: move to structure
+        self.mem2core_addr = Signal.like(core.mem2core_addr, name=f"{prefix}_mem2core_addr")
+        self.mem2core_en = Signal.like(core.mem2core_en, name=f"{prefix}_mem2core_en")
+        self.mem2core_seq = Signal.like(core.mem2core_seq, name=f"{prefix}_mem2core_seq")
+        comb += self.mem2core_addr.eq(Past(core.mem2core_addr, past))
+        comb += self.mem2core_en.eq(Past(core.mem2core_en, past))
+        comb += self.mem2core_seq.eq(Past(core.mem2core_seq, past))
+
+
+
+
+        comb += self.input_ready.eq(Past(core.input_ready, past))
+        for i in range(core.look_ahead):
+            comb += self.input_data[i].eq(Past(core.input_data[i], past))
+
+    def assert_loading_from (self, m:Core, addr, src_loc_at=1):
+        comb = m.d.comb
+        comb += Assert(self.mem2core_en, src_loc_at=src_loc_at)
+        comb += Assert(self.mem2core_addr == addr, src_loc_at=src_loc_at)
+
     def assert_same_gpr(self, m:Core, other:RegisterFile, src_loc_at=1):
         comb = m.d.comb
 
@@ -41,18 +64,29 @@ class VerificationRegisterFile:
             comb += Assert(self.r[i] == other[i], src_loc_at=src_loc_at)
 
     
-    def assert_same_gpr_but_one(self, m:Core, other:RegisterFile, skip:Value, src_loc_at=1):
+    def assert_same_gpr_but_one(self, m:Module, other:RegisterFile, skip:Value, src_loc_at=1):
         comb = m.d.comb
 
         for i in range(self.r.main_gpr_count()):
             with m.If(skip != i):
                 comb += Assert(self.r[i] == other[i], src_loc_at=src_loc_at)
 
-    def assert_pc_advanced(self, m:Module, previous:RegisterFile, src_loc_at=1):
-        #TODO: previous is not a RF
+    def assert_gpr_value(self, m:Module, idx:Value, expected_value:Value, src_loc_at=1):
+        """ Assert GPR value (ignored for idx = 0 and zeri is checked instead) """
         comb = m.d.comb
-        comb += Assert(self.r.pc == (previous.r.pc + 4)[:self.r.pc.width], src_loc_at=src_loc_at)
+        with m.If(idx == 0):
+            comb += Assert(self.r[0] == 0, src_loc_at=src_loc_at)
+        with m.Else():
+            comb += Assert(self.r[idx] == expected_value, src_loc_at=src_loc_at)
 
+
+    def assert_pc_advanced(self, m:Module, previous:RegisterFile, src_loc_at=1):
+        comb = m.d.comb
+        comb += Assert(self.r.pc == (previous.pc + 4)[:self.r.pc.width], src_loc_at=src_loc_at)
+
+    def assert_same_pc(self, m:Module, previous:RegisterFile, src_loc_at=1):        
+        comb = m.d.comb
+        comb += Assert(self.r.pc == previous.pc, src_loc_at=src_loc_at)
 
 class ProofOverTicks:
     def __init__(self, ticks:int):

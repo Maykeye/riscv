@@ -1,5 +1,5 @@
 from encoding import IType, JType, UType, BType
-from opcodes import Opcode, OpImm, OpBranch
+from opcodes import Opcode, OpImm, OpBranch, OpLoad
 
 class MemBuild:
     def __init__(self, pc=0x0, existing_dict=None):
@@ -48,7 +48,8 @@ class MemBuild:
         return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BLTU, rs1=rs1, rs2=rs2, imm=imm))
     def bgeu(self, rs1, rs2, imm):
         return self.add_i32(BType.build_i32(opcode=Opcode.Branch, funct3=OpBranch.BGEU, rs1=rs1, rs2=rs2, imm=imm))
-
+    def lb(self, rd, rs1, imm):
+        return self.add_i32(IType.build_i32(opcode=Opcode.Load, rd=rd, funct3=OpLoad.LB, rs1=rs1, imm=imm))
 
 if __name__ == "__main__":
     m = MemBuild(0)

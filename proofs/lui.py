@@ -57,7 +57,7 @@ class ProofLui(ProofOverTicks):
                 now.assert_same_gpr_but_one(m, last.r, last.utype.rd)
                 comb += Assert(now.r[last.utype.rd] == last.utype.imm)
                 comb += Assert(now.r[last.utype.rd][0:12] == 0)
-            now.assert_pc_advanced(m, last)
+            now.assert_pc_advanced(m, last.r)
             
 
     def simulate(self):
