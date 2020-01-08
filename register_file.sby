@@ -1,0 +1,17 @@
+[tasks]
+bmc
+
+[options]
+bmc: mode bmc
+depth 8
+multiclock off
+
+[engines]
+smtbmc z3
+
+[script]
+read_ilang register_file.il
+prep -top top
+
+[files]
+register_file.il

@@ -58,9 +58,6 @@ class Core(ElaboratableAbstract):
 
         # instruction implementation contains actual implementation of instructions
         self.instructions : List[Instruction] = []                
-        #self.r = RegisterFile(self.xlen)
-
-
 
         # is enabled is an optional input pin that can pauses RISCV
         self.is_enabled = Signal(name="en") if include_enable else None
@@ -92,7 +89,8 @@ class Core(ElaboratableAbstract):
         self.left_shifter = Shifter(xlen, Shifter.LEFT, "SL")
         self.right_shifter = Shifter(xlen, Shifter.RIGHT, "SR")
         self.register_file = RegisterFileModule(xlen)        
-        self.pc = Signal(xlen, name="pc")
+        
+        self.pc = Signal(xlen, name="pc") #TODO: remove from register file? use additional signals in regfile?
         
 
 
