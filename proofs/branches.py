@@ -16,7 +16,7 @@ class ProofBranchBase(ProofOverTicks):
 
     def run_main_proof(self):
         m = self.module
-        with m.If(self.time[1].input_ready & self.time[1].btype.match(opcode=Opcode.Branch, funct3=self.op_branch())):
+        with m.If(self.time[1].at_instruction_start() & self.time[1].btype.match(opcode=Opcode.Branch, funct3=self.op_branch())):
             self.run_general()
             self.run_example()
             self.time[0].assert_same_gpr(

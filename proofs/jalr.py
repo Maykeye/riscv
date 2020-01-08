@@ -18,7 +18,7 @@ class ProofJalr(ProofOverTicks):
 
     def run_main_proof(self):
         m = self.module
-        with m.If(self.time[1].input_ready):
+        with m.If(self.time[1].at_instruction_start()):
             self.run_general()
             self.run_example()
 

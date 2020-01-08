@@ -28,7 +28,7 @@ class BranchBase(Instruction):
         
         # First we compare the actual values in RS1 and RS2
         eq_comparison = Signal()
-        comb += eq_comparison.eq(self.comparison_impl(core.r[core.btype.rs1], core.r[core.btype.rs2]))
+        comb += eq_comparison.eq(self.comparison_impl(core.query_rs1(), core.query_rs2()))
 
         # Then we decide if we want to negate them
         eq_result = Signal()
@@ -36,7 +36,7 @@ class BranchBase(Instruction):
     
         # With this, we can move to new pc
         with m.If(eq_result):
-            core.assign_pc(core.r.pc + core.btype.imm)
+            core.assign_pc(core.pc + core.btype.imm)
             # Let the world know what branch instruction was executed
             core.emit_debug_opcode(self.decode_debug_opcode(), core.btype.imm)
         with m.Else():

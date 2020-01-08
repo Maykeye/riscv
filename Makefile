@@ -3,9 +3,10 @@ PROOFS=$(RV32I_OPS)
 
 PROOF_TARGETS = $(addprefix run-, $(PROOFS))
 
+run-all-proofs: $(PROOF_TARGETS)
+
 # https://stackoverflow.com/questions/10172413/how-to-generate-targets-in-a-makefile-by-iterating-over-a-list
 define make-proof-target
-run-all-proofs: $(PROOF_TARGETS)
 
 run-$1: test_results/$1/$1_bmc/PASS
 
@@ -22,6 +23,11 @@ test_results/$1/$1_bmc/PASS:
 	cp skeleton.sby "test_results/$1/$1.sby"		
 	cd "test_results/$1/"  && sby -f "$1.sby"
 endef
+
+stat:
+	python3 rv.py generate -t il rv.il
+	# use ice40, as it's primal friend of yosys
+	yosys -p "read_ilang rv.il; proc; opt; flatten; synth_ice40"
 
 $(foreach proof,$(PROOFS),$(eval $(call make-proof-target,$(proof))))
 

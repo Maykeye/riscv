@@ -16,7 +16,7 @@ class AuipcInstr(Instruction):
 
     def implement(self):
         core : Core = self.core
-        core.assign_gpr(core.utype.rd, core.r.pc + core.utype.imm)
+        core.assign_gpr(core.utype.rd, core.pc + core.utype.imm)
         core.emit_debug_opcode(DebugOpcode.AUIPC, core.utype.imm)
         core.move_pc_to_next_instr()
 

@@ -16,10 +16,10 @@ class JalrInstr(Instruction):
     def implement(self):
         core : Core = self.core
         
-        core.assign_gpr(core.itype.rd, core.r.pc + 4)
+        core.assign_gpr(core.itype.rd, core.pc + 4)
         all_bits = (1 << core.xlen) - 1
         mask = all_bits ^ 1 #clear_lsb
-        target_address = ((core.r[core.itype.rs1] + core.itype.imm)[0:32]) & mask
+        target_address = ((core.query_rs1() + core.itype.imm)[0:32]) & mask
         core.assign_pc(target_address)
         core.emit_debug_opcode(DebugOpcode.JALR, core.itype.imm)
 

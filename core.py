@@ -16,7 +16,7 @@ from skeleton import muS
 
 from instruction import Instruction
 from opcodes import DebugOpcode, OpAlu
-from register_file import RegisterFile
+from register_file import RegisterFile, RegisterFileModule
 from encoding import IType, UType, JType, BType
 from clock_info import ClockInfo
 from alu import ALU
@@ -57,8 +57,10 @@ class Core(ElaboratableAbstract):
         self.mem2core_seq = self.add_output_signal(name="mem2core_seq")        
 
         # instruction implementation contains actual implementation of instructions
-        self.instructions : List[Instruction] = []        
-        self.r = RegisterFile(self.xlen)
+        self.instructions : List[Instruction] = []                
+        #self.r = RegisterFile(self.xlen)
+
+
 
         # is enabled is an optional input pin that can pauses RISCV
         self.is_enabled = Signal(name="en") if include_enable else None
@@ -89,6 +91,9 @@ class Core(ElaboratableAbstract):
         self.alu =  ALU(self.xlen, "alu")
         self.left_shifter = Shifter(xlen, Shifter.LEFT, "SL")
         self.right_shifter = Shifter(xlen, Shifter.RIGHT, "SR")
+        self.register_file = RegisterFileModule(xlen)        
+        self.pc = Signal(xlen, name="pc")
+        
 
 
 
@@ -105,6 +110,7 @@ class Core(ElaboratableAbstract):
         m.submodules.alu = self.alu
         m.submodules.shl = self.left_shifter
         m.submodules.shr = self.right_shifter
+        m.submodules.regs = self.register_file
         self.iclk = m.d.i
 
         m.d.comb += self.last_instruction_valid.eq(self.cycle != 0)
@@ -135,21 +141,35 @@ class Core(ElaboratableAbstract):
             with m.If(self.is_enabled):
                 self.elaborate_impl(p)
 
-        self.iclk += self.r[0].eq(0)
         self.advance_pc_if_needed()
         self.iclk += self.last_instruction.eq(self.current_instruction)
         return m
 
+    def query_rs1(self, idx=None):
+        """ Query register file throught RS1 port. If no index provided, rs1 from the current instruction is used """
+        if idx is None:
+            idx = self.itype.rs1
+        comb = self.current_module.d.comb
+        comb += self.register_file.rs1_in.eq(idx)
+        return self.register_file.rs1_out
+
+    def query_rs2(self, idx=None):
+        """ Query register file throught RS2 port. If no index provided, rs2 from the current instruction is used """
+        if idx is None:
+            idx = self.btype.rs2
+        comb = self.current_module.d.comb
+        comb += self.register_file.rs2_in.eq(idx)
+        return self.register_file.rs2_out
 
     def elaborate_impl(self, p:Platform) -> Module:
         m = self.current_module
-        comb = m.d.comb
+        #comb = m.d.comb
         iclk = self.iclk
         self.emit_debug_opcode(DebugOpcode.NOT_SPECIFIED, 0)
 
         with m.If(self.in_reset):
             iclk += self.in_reset.eq(0)
-            iclk += self.r.pc.eq(0x200)            
+            iclk += self.pc.eq(0x200)            
             iclk += self.mem2core_en.eq(1)
             iclk += self.mem2core_addr.eq(0x200)
             iclk += self.mem2core_seq.eq(1)
@@ -169,39 +189,37 @@ class Core(ElaboratableAbstract):
         with m.Else():
             iclk += self.mem2core_seq.eq(1)
             iclk += self.mem2core_en.eq(1)
-            iclk += self.mem2core_addr.eq(self.r.pc)
+            iclk += self.mem2core_addr.eq(self.pc)
             self.emit_debug_opcode(DebugOpcode.AWAIT_READ)
  
         return m
 
-    def call_alu(self, rdst : Signal, func : OpAlu, lhs : Statement, rhs : Statement): 
-        """ Call ALU and assign result to RDST on the next cycle """
+    def call_alu(self, func : OpAlu, lhs : Statement, rhs : Statement): 
+        """ Call ALU and return its output wire """
         comb = self.current_module.d.comb 
-        iclk = self.iclk
-        # TODO: check for (rdst is r0)?
 
         comb += self.alu.lhs.eq(lhs)
         comb += self.alu.rhs.eq(rhs)        
         comb += self.alu.op.eq(func)        
         comb += self.alu.en.eq(1)
 
-        iclk += rdst.eq(self.alu.output)
+        return self.alu.output
 
         
-    def call_left_shift(self, rdst : Signal, rs: Value, shamt : Statement):
-        comb = self.current_module.d.comb 
-        iclk = self.iclk
+    def call_left_shift(self, rs: Value, shamt : Statement):
+        """ Call SHIFT-LEFT module and return its output wire """
+        comb = self.current_module.d.comb         
         comb += self.left_shifter.input.eq(rs)
         comb += self.left_shifter.shamt.eq(shamt)
-        iclk += rdst.eq(self.left_shifter.output)
+        return self.left_shifter.output
 
-    def call_right_shift(self, rdst : Signal, rs: Value, shamt : Statement, msb : Statement):
+    def call_right_shift(self, rs: Value, shamt : Statement, msb : Statement):
+        """ Call SHIFT-RIGHT module and return its output wire """
         comb = self.current_module.d.comb 
-        iclk = self.iclk
         comb += self.right_shifter.input.eq(rs)
         comb += self.right_shifter.msb.eq(msb)
         comb += self.right_shifter.shamt.eq(shamt)
-        iclk += rdst.eq(self.right_shifter.output)
+        return self.right_shifter.output
 
 
     def emit_debug_opcode(self, op:DebugOpcode, x : Optional[Value] = None):
@@ -217,16 +235,19 @@ class Core(ElaboratableAbstract):
 
     def move_pc_to_next_instr(self):
         """ Move PC to the start of the next instruction """
-        self.assign_pc(self.r.pc + 4)
+        self.assign_pc(self.pc + 4)
 
     def assign_gpr(self, idx:Value, value:Value):
         # R0 will be reassigned to 0 at the end of elaborate()
-        self.iclk += self.r[idx].eq(value)
+        comb = self.current_module.d.comb
+        comb += self.register_file.rd.eq(idx)
+        comb += self.register_file.rd_value.eq(value)
+        
 
     def advance_pc_if_needed(self):
         m = self.current_module
         with m.If(self.advance_pc):
-            self.iclk += self.r.pc.eq(self.next_pc)
+            self.iclk += self.pc.eq(self.next_pc)
             self.schedule_read(self.next_pc, 1)
             self.iclk += self.cycle.eq(0)            
 
