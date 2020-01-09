@@ -3,7 +3,7 @@ from nmigen import Module, Signal, Mux, Const, Value, Cat, Repl
 from instruction import Instruction
 from core import Core
 from opcodes import Opcode, DebugOpcode, OpLoad
-from proofs.load import ProofLB, ProofLBU, ProofLH, ProofLHU
+from proofs.load import ProofLB, ProofLBU, ProofLH, ProofLHU, ProofLW
 
 class LoadBase(Instruction):
     def funct3(self):
@@ -83,4 +83,21 @@ class LhLhuInstr(LoadBase):
 
     def proofs(self):
         return [ProofLH, ProofLHU]
+
+class LwInstr(LoadBase):
+    def funct3(self):
+        return OpLoad.LW
+
+    def process_load(self, input_value):
+        lw_value = Signal(32)
+        comb = self.core.current_module.d.comb
+        # TODO: report "unsigned" lw as error instruction
+        comb += lw_value.eq(input_value)
+        return lw_value
+
+    def debug_opcodes(self):
+        return [DebugOpcode.LW, DebugOpcode.LW]
+
+    def proofs(self):
+        return [ProofLW]
 

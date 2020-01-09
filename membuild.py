@@ -56,6 +56,8 @@ class MemBuild:
         return self.add_i32(IType.build_i32(opcode=Opcode.Load, rd=rd, funct3=OpLoad.LH, rs1=rs1, imm=imm))
     def lhu(self, rd, rs1, imm):
         return self.add_i32(IType.build_i32(opcode=Opcode.Load, rd=rd, funct3=OpLoad.LHU, rs1=rs1, imm=imm))
+    def lw(self, rd, rs1, imm):
+        return self.add_i32(IType.build_i32(opcode=Opcode.Load, rd=rd, funct3=OpLoad.LW, rs1=rs1, imm=imm))
 
 if __name__ == "__main__":
     m = MemBuild(0)

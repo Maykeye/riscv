@@ -157,3 +157,26 @@ class ProofLHU(ProofLoadBase):
             .lhu(3, 0, 0x101)
             .nop()
         ).dict
+
+class ProofLW(ProofLoadBase):
+    def op_load(self):
+        return OpLoad.LW
+    
+    def match(self, rv, input):
+        m : Module = self.module
+        comb = m.d.comb
+        comb += Assert(rv[0:32] == input)
+        #TODO: sext for 64 mode
+        
+    def simulate(self):
+        return (MemBuild() 
+            .set_origin(0x100)
+            .add_i32(0x12345678)
+            .add_i32(0xF0E0B0C0)
+            .set_origin(0x200)
+            .lw(1, 0, 0x100)
+            .lw(2, 0, 0x104)
+            .lw(3, 0, 0x101)
+            .nop()
+        ).dict
+
