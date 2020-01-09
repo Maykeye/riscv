@@ -3,7 +3,7 @@ from nmigen import Module, Signal, Mux, Const, Value, Cat, Repl
 from instruction import Instruction
 from core import Core
 from opcodes import Opcode, DebugOpcode, OpLoad
-from proofs.load import ProofLB, ProofLBU
+from proofs.load import ProofLB, ProofLBU, ProofLH, ProofLHU
 
 class LoadBase(Instruction):
     def funct3(self):
@@ -64,4 +64,23 @@ class LbLbuInstr(LoadBase):
 
     def proofs(self):
         return [ProofLB, ProofLBU]
+
+
+class LhLhuInstr(LoadBase):
+    def funct3(self):
+        return OpLoad.LH
+
+    def process_load(self, input_value):
+        lh_value = Signal(32)
+        comb = self.core.current_module.d.comb
+        
+        bit_to_replicate=Mux(self.core.itype.funct3[2], Const(0,1), input_value[15])
+        comb += lh_value.eq(Cat(input_value[0:16], Repl(bit_to_replicate, 16)))
+        return lh_value
+
+    def debug_opcodes(self):
+        return [DebugOpcode.LH, DebugOpcode.LHU]
+
+    def proofs(self):
+        return [ProofLH, ProofLHU]
 

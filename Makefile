@@ -1,4 +1,4 @@
-RV32I_OPS=addi ori andi xori slli srli srai jal jalr lui auipc beq bne blt bge bltu bgeu lb lbu
+RV32I_OPS=addi ori andi xori slli srli srai jal jalr lui auipc beq bne blt bge bltu bgeu lb lbu lh lhu
 PROOFS=$(RV32I_OPS)
 
 PROOF_TARGETS = $(addprefix run-, $(PROOFS))

@@ -87,11 +87,6 @@ class ProofLB(ProofLoadBase):
             .lb(2, 0, 0x104)
             .lb(3, 0, 0x101)
             .nop()
-            .nop()
-            .nop()
-            .nop()
-            .nop()
-            .nop()
         ).dict
 
 class ProofLBU(ProofLoadBase):
@@ -114,9 +109,51 @@ class ProofLBU(ProofLoadBase):
             .lbu(2, 0, 0x104)
             .lbu(3, 0, 0x101)
             .nop()
+        ).dict
+
+class ProofLH(ProofLoadBase):
+    def op_load(self):
+        return OpLoad.LH
+    
+    def match(self, rv, input):
+        m : Module = self.module
+        comb = m.d.comb
+        comb += Assert(rv[0:16] == input[0:16])
+        with m.If(input[15]):
+            comb += Assert(rv[16:32] == -1)
+        with m.Else():
+            comb += Assert(rv[16:32] == 0)
+        
+    def simulate(self):
+        return (MemBuild() 
+            .set_origin(0x100)
+            .add_i32(0x12345678)
+            .add_i32(0xF0E0B0C0)
+            .set_origin(0x200)
+            .lh(1, 0, 0x100)
+            .lh(2, 0, 0x104)
+            .lh(3, 0, 0x101)
             .nop()
-            .nop()
-            .nop()
-            .nop()
+        ).dict
+
+class ProofLHU(ProofLoadBase):
+    def op_load(self):
+        return OpLoad.LHU
+    
+    def match(self, rv, input):
+        m : Module = self.module
+        comb = m.d.comb
+        comb += Assert(rv[0:16] == input[0:16])
+        comb += Assert(rv[16:32] == 0)
+        
+    def simulate(self):
+        return (MemBuild() 
+            .set_origin(0x100)
+            .add_i32(0x12345678)
+            .add_i32(0xF0E0B0C0)
+            .set_origin(0x200)
+            .lhu(1, 0, 0x100)
+            .lhu(2, 0, 0x104)
+            .lhu(3, 0, 0x101)
             .nop()
         ).dict

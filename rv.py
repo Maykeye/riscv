@@ -9,7 +9,7 @@ from instructions.jalr import JalrInstr
 from instructions.lui import LuiInstr
 from instructions.auipc import AuipcInstr
 from instructions.branches import BeqBneInstr, BltBgeInstr, BltuBgeuInstr
-from instructions.load import LbLbuInstr
+from instructions.load import LbLbuInstr, LhLhuInstr
 
 from clock_info import ClockInfo
 import sys 
@@ -17,6 +17,7 @@ import alu
 from nmigen import ResetSignal
 
 from proofs.verification import ProofOverTicks
+
 
 def main():
     m = Module()
@@ -42,6 +43,7 @@ def main():
     core.add_instruction(BltBgeInstr())
     core.add_instruction(BltuBgeuInstr())
     core.add_instruction(LbLbuInstr())
+    core.add_instruction(LhLhuInstr())
     
     proof_instance=None
     generate_proof="generate" in sys.argv
