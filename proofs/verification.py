@@ -20,36 +20,33 @@ class VerificationRegisterFile:
 
         # TODO: move to additional structure
         self.itype = IType(prefix=f"{prefix}_i")        
-        self.itype.elaborate(comb, Past(core.input_data[0], past))
+        self.itype.elaborate(comb, Past(core.current_instruction, past))
 
         self.jtype = JType(prefix=f"{prefix}_j")
-        self.jtype.elaborate(comb, Past(core.input_data[0], past))
+        self.jtype.elaborate(comb, Past(core.current_instruction, past))
 
         self.utype = UType(prefix=f"{prefix}_u")
-        self.utype.elaborate(comb, Past(core.input_data[0], past))
+        self.utype.elaborate(comb, Past(core.current_instruction, past))
 
         self.btype = BType(prefix=f"{prefix}_b")
-        self.btype.elaborate(comb, Past(core.input_data[0], past))
+        self.btype.elaborate(comb, Past(core.current_instruction, past))
 
-        self.input_ready = Signal.like(core.input_ready, name=f"{prefix}_input_ready")       
+        # TODO: membus
+        self.input_ready = Signal.like(core.mem2core.ready, name=f"{prefix}_input_ready")       
         self.input_data = Array([Signal(core.xlen, name=f"{prefix}_input_{i}") for i in range(core.look_ahead)])
         
         self.cycle = Signal.like(core.cycle, name=f"{prefix}_cycle")
         comb += self.cycle.eq(Past(core.cycle, past))
 
         # TODO: move to structure
-        self.mem2core_addr = Signal.like(core.mem2core_addr, name=f"{prefix}_mem2core_addr")
-        self.mem2core_en = Signal.like(core.mem2core_en, name=f"{prefix}_mem2core_en")
-        self.mem2core_seq = Signal.like(core.mem2core_seq, name=f"{prefix}_mem2core_seq")
-        comb += self.mem2core_addr.eq(Past(core.mem2core_addr, past))
-        comb += self.mem2core_en.eq(Past(core.mem2core_en, past))
-        comb += self.mem2core_seq.eq(Past(core.mem2core_seq, past))
-
-
-
-        comb += self.input_ready.eq(Past(core.input_ready, past))
-        for i in range(core.look_ahead):
-            comb += self.input_data[i].eq(Past(core.input_data[i], past))
+        self.mem2core_addr = Signal.like(core.mem2core.addr, name=f"{prefix}_mem2core_addr")
+        self.mem2core_en = Signal.like(core.mem2core.en, name=f"{prefix}_mem2core_en")
+        self.mem2core_seq = Signal.like(core.mem2core.seq, name=f"{prefix}_mem2core_seq")
+        comb += self.mem2core_addr.eq(Past(core.mem2core.addr, past))
+        comb += self.mem2core_en.eq(Past(core.mem2core.en, past))
+        comb += self.mem2core_seq.eq(Past(core.mem2core.seq, past))
+        comb += self.input_ready.eq(Past(core.mem2core.ready, past))        
+        comb += self.input_data[0].eq(Past(core.mem2core.value, past))
 
     def at_instruction_start(self):
         return (self.cycle == 0) & (self.input_ready[0])

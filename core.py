@@ -21,7 +21,7 @@ from encoding import IType, UType, JType, BType
 from clock_info import ClockInfo
 from alu import ALU
 from shifter import Shifter
-
+from membus import MemoryBus
 
 class Core(ElaboratableAbstract):
     def __init__(self, clock, look_ahead=1, addr_length=32, xlen=32, include_enable=False, include_debug_opcode=1):
@@ -32,29 +32,27 @@ class Core(ElaboratableAbstract):
         self.look_ahead = look_ahead
         super().__init__()
         self.clock = clock
-        
-        # Input Data holds N words that recently were read from memory
-        # and meant to be executed by the CPU
-        self.input_data = Array([self.add_input_signal(32, name=f"input_{i}") for i in range(look_ahead)])
 
         # register width
         self.xlen = xlen
-
-        # input_ready shows which input was actually fetched from cpu
-        self.input_ready = self.add_input_signal(look_ahead, name="input_ready")
-
         # addr_length holds width of address bus
         self.addr_length = addr_length
-        
-        # mem2core_addr is an address from which memory must be read
-        self.mem2core_addr = self.add_output_signal(self.addr_length, name="mem2core_addr")
 
-        # mem2core_re, mem2core read enable shows that core wants to read data from memory
-        self.mem2core_en = self.add_output_signal(name="mem2core_re")
-        
-        # mem2core_seq indicates that core is going to read data in sequence.
-        # core thinks that next read will be either from next byte or from next word
-        self.mem2core_seq = self.add_output_signal(name="mem2core_seq")        
+        # add mem2core bus for reads
+        self.mem2core = mem2core = MemoryBus(addr_length, xlen, "mem2core")
+        self.add_existing_output_signal(mem2core.addr)
+        self.add_existing_output_signal(mem2core.en)
+        self.add_existing_output_signal(mem2core.seq)
+        self.add_existing_input_signal(mem2core.ready)
+        self.add_existing_input_signal(mem2core.value)
+
+        # add core2mem bus for writes
+        self.core2mem = core2mem = MemoryBus(addr_length, xlen, "core2mem")
+        self.add_existing_output_signal(core2mem.addr)
+        self.add_existing_output_signal(core2mem.en)
+        self.add_existing_output_signal(core2mem.seq)
+        self.add_existing_output_signal(core2mem.value)
+        self.add_existing_input_signal(mem2core.ready)        
 
         # instruction implementation contains actual implementation of instructions
         self.instructions : List[Instruction] = []                
@@ -114,8 +112,8 @@ class Core(ElaboratableAbstract):
         m.d.comb += self.last_instruction_valid.eq(self.cycle != 0)
         
 
-        with m.If((self.cycle == 0) & (self.input_ready[0])):
-            m.d.comb += self.current_instruction.eq(self.input_data[0])
+        with m.If((self.cycle == 0) & (self.mem2core.ready)):
+            m.d.comb += self.current_instruction.eq(self.mem2core.value)
             m.d.comb += self.current_instruction_valid.eq(1)
         with m.Else():
             m.d.comb += self.current_instruction.eq(self.last_instruction)
@@ -167,10 +165,8 @@ class Core(ElaboratableAbstract):
 
         with m.If(self.in_reset):
             iclk += self.in_reset.eq(0)
-            iclk += self.pc.eq(0x200)            
-            iclk += self.mem2core_en.eq(1)
-            iclk += self.mem2core_addr.eq(0x200)
-            iclk += self.mem2core_seq.eq(1)
+            iclk += self.pc.eq(0x200)  
+            self.mem2core.init_read(iclk, 0x200, 1)
             self.emit_debug_opcode(DebugOpcode.IN_RESET)     
         with m.Elif(self.have_valid_instruction):
             # Run instruction if data is ready
@@ -185,9 +181,7 @@ class Core(ElaboratableAbstract):
                 self.move_pc_to_next_instr()
                 #TODO: add reg instruction_executed and check it instead?
         with m.Else():
-            iclk += self.mem2core_seq.eq(1)
-            iclk += self.mem2core_en.eq(1)
-            iclk += self.mem2core_addr.eq(self.pc)
+            self.mem2core.init_read(self.iclk, self.pc, 1)
             self.emit_debug_opcode(DebugOpcode.AWAIT_READ)
  
         return m
@@ -250,23 +244,21 @@ class Core(ElaboratableAbstract):
             self.iclk += self.cycle.eq(0)            
 
     def schedule_read(self, addr, seq):
-        self.iclk += self.mem2core_seq.eq(seq)
-        self.iclk += self.mem2core_en.eq(1)
-        self.iclk += self.mem2core_addr.eq(addr)
+        self.mem2core.init_read(self.iclk, addr, seq)
 
     def make_fakemem(self, m : Module, mem : Dict[int, int]):
         comb : List[Statement] = m.d.comb
-        with m.If(self.mem2core_en):
-            with m.Switch(self.mem2core_addr):
+        with m.If(self.mem2core.en):
+            with m.Switch(self.mem2core.addr):
                 for address, value in mem.items():
                     with m.Case(address):
                         word_value = value | (mem.get(address+1, 0xff) << 8) | (mem.get(address+2, 0xff) << 16) | (mem.get(address+3, 0xff) << 24)
-                        comb += self.input_data[0].eq(word_value)
+                        comb += self.mem2core.value.eq(word_value)
                 with m.Default():
-                    comb += self.input_data[0].eq(0xFFFFFFFF) 
-            comb += self.input_ready.eq(1)
+                    comb += self.mem2core.value.eq(0xFFFFFFFF) 
+            comb += self.mem2core.ready.eq(1)
         with m.Else():
-            comb += self.input_ready.eq(0)
+            comb += self.mem2core.ready.eq(1)
                 
 
     def simulate(self, top : Module, clk : ClockInfo, mem : Dict[int, int], n=30, filename_prefix="waves/test"):

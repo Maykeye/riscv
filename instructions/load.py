@@ -35,8 +35,8 @@ class LoadBase(Instruction):
 
         #core.process_cycle(1, advance_cycle=False)
         with m.Elif(core.cycle == 1):
-            with m.If(core.input_ready[0]):
-                value = self.process_load(core.input_data[0])
+            with m.If(core.mem2core.ready):
+                value = self.process_load(core.mem2core.value)
                 core.assign_gpr(core.itype.rd, value)                
                 core.move_pc_to_next_instr()
             with m.Else():

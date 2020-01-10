@@ -29,19 +29,19 @@ class ElaboratableAbstract(Elaboratable):
     def ports(self) -> List[Signal]:
         return self.inputs() + self.outputs() + self.aux_ports
 
-    def __add_input(self, signal : Signal):
+    def add_existing_input_signal(self, signal : Signal):
         self.input_signal_list.append(signal)
         return signal
 
-    def __add_output(self, signal : Signal):
+    def add_existing_output_signal(self, signal : Signal):
         self.output_signal_list.append(signal)
         return signal
 
     def add_input_signal(self, *kw, **args):
-        return self.__add_input(Signal(*kw, **args))
+        return self.add_existing_input_signal(Signal(*kw, **args))
 
     def add_output_signal(self, *kw, **args):
-        return self.__add_output(Signal(*kw, **args))
+        return self.add_existing_output_signal(Signal(*kw, **args))
 
     def add_auxiliary_port(self, *kw, **args):
         signal = Signal(*kw, **args)
